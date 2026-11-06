@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 concurrency:
@@ -18,16 +18,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
-      - name: Apply reviewed realism update
-        if: hashFiles('realism-update.zip') != ''
-        run: |
-          unzip -oq realism-update.zip
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist tools docs README.md
-          git rm realism-update.zip
-          git commit -m "Refine villa materials, furniture and daylight; retain source doors"
-          git push
       - name: Check viewer JavaScript
         run: |
           node --check dist/app.js
