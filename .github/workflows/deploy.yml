@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 concurrency:
@@ -18,28 +18,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
-      - name: Install reviewed native interior release
-        if: ${{ hashFiles('veil-native-shell.zip') != '' }}
-        run: |
-          python3 - <<'PY'
-          import zipfile
-          from pathlib import PurePosixPath
-          for name in ['veil-native-shell.zip','veil-native-interiors.zip','veil-native-viewer.zip']:
-              with zipfile.ZipFile(name) as archive:
-                  for item in archive.infolist():
-                      p=PurePosixPath(item.filename)
-                      assert not p.is_absolute() and '..' not in p.parts
-                      assert p.parts[0] in ['dist','tools','docs','README.md']
-                  archive.extractall('.')
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist tools docs README.md
-          git rm veil-native-shell.zip veil-native-interiors.zip veil-native-viewer.zip
-          git commit -m "Publish three native SketchUp interiors, realistic surfaces and resilient lightweight viewer"
-          git push
       - name: Check viewer JavaScript
         run: |
+          node --check dist/startup.js
           node --check dist/app.js
           node --check dist/interior.js
           node --check dist/interior-design.js
