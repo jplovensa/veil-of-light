@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {exteriorPalettes} from './exterior-palettes.js?v=native-5';
+import {exteriorPalettes} from './exterior-palettes.js?v=furniture-7';
 function surfaceTexture(type){
  const c=document.createElement('canvas');c.width=c.height=512;const ctx=c.getContext('2d');let seed=91;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
  ctx.fillStyle='#d1cbc0';ctx.fillRect(0,0,512,512);

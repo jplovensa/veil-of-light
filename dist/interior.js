@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {buildInteriorDesign} from './interior-design.js?v=native-5';
+import {buildInteriorDesign} from './interior-design.js?v=furniture-7';
 const surfaces=new Map();let photoPromise;
 function surface(kind){
  if(surfaces.has(kind))return surfaces.get(kind);const size=128,data=new Uint8Array(size*size*4);let seed=27;
@@ -14,7 +14,7 @@ function makePalette(design){const palette={};for(const [key,p]of Object.entries
  palette[key]=mat;
  }return palette;}
 export async function loadNativeInterior(id,loadModel){
- let disposed=false;const design=buildInteriorDesign(id),gltf=await loadModel(`./assets/optimized/${id}.glb`),root=gltf.scene,palette=makePalette(design),movable=[];root.name=design.title;
+ let disposed=false;const design=buildInteriorDesign(id),gltf=await loadModel(`./assets/optimized/${id}.glb?v=furniture-7`),root=gltf.scene,palette=makePalette(design),movable=[];root.name=design.title;
  root.traverse(o=>{if(o.userData.movable){o.userData.initial={x:o.position.x,z:o.position.z,rotation:o.rotation.y};movable.push(o);}if(!o.isMesh)return;const list=Array.isArray(o.material)?o.material:[o.material];o.material=list.map(mat=>{const key=mat.name.replace('MT | ','');mat.dispose();return palette[key]||palette.limewash;});if(o.material.length===1)o.material=o.material[0];o.castShadow=!(o.material.transparent||o.name.includes('glass'));o.receiveShadow=true;});
  return{design,root,palette,movable,scheme:id,dispose(){disposed=true;root.traverse(o=>{if(o.isMesh)o.geometry.dispose();});for(const mat of Object.values(palette))mat.dispose();},async enhance(){
   if(!photoPromise){const loader=new THREE.TextureLoader();photoPromise=Promise.all(['wood-color','teak-normal','teak-roughness','linen-color','linen-normal','linen-roughness','mineral-color','plaster-normal','plaster-roughness'].map(async key=>{try{const map=await loader.loadAsync(`./assets/surfaces/${key}.jpg`);map.wrapS=map.wrapT=THREE.RepeatWrapping;map.colorSpace=key.endsWith('color')?THREE.SRGBColorSpace:THREE.NoColorSpace;map.anisotropy=4;return[key,map];}catch{return[key,null];}})).then(Object.fromEntries);}

@@ -77,7 +77,16 @@ def shape(part):
  kind=part['shape'];s=part.get('s');verts=[];faces=[];smooth=kind not in('box','archPanel')
  if kind in('vessel','shade','lathe'):
   seg=32
-  if kind=='lathe':profile=[(r*s[0],y*s[1])for r,y in part['profile']]
+  if kind=='lathe':
+   profile=part['profile']
+   if part.get('smoothProfile'):
+    sampled=[]
+    for j in range(len(profile)-1):
+     a,b,c,d=profile[max(0,j-1)],profile[j],profile[j+1],profile[min(len(profile)-1,j+2)]
+     for step in range(3):
+      t=step/3;sampled.append(tuple(.5*((2*b[k])+(-a[k]+c[k])*t+(2*a[k]-5*b[k]+4*c[k]-d[k])*t*t+(-a[k]+3*b[k]-3*c[k]+d[k])*t*t*t)for k in range(2)))
+    profile=sampled+[profile[-1]]
+   profile=[(max(0,r)*s[0],y*s[1])for r,y in profile]
   elif kind=='shade':profile=[(s[0]*math.sin((i+.3)/16.3*math.pi/2),s[1]*math.cos((i+.3)/16.3*math.pi/2))for i in range(17)]
   else:
    outline=[(.48,0),(.7,.04),(.88,.2),(.99,.62),(1,.95),(s[2]/s[0],1),(s[2]/s[0]-.065,1),(.9,.93),(.88,.6),(.75,.22),(.38,.09),(0,.09)] if s[2]/s[0]>.7 else [(0,0),(.5,0),(.7,.04),(.97,.25),(1,.48),(.86,.64),(.48,.79),(.4,.97),(.4,1),(.31,1),(.31,.96),(.4,.8),(.73,.61),(.85,.45),(.73,.22),(.35,.09),(0,.09)]
@@ -115,10 +124,10 @@ def shape(part):
  elif kind=='leaf':
   for j in range(11):
    t=j/10;w=math.sin(math.pi*t)**.8*s[0]/2
-   for k in[-1,0,1]:verts.append((k*w,(t-.5)*s[1],(1-abs(k))*.3*math.sin(math.pi*t)*s[2]))
+   for k in[-1,-.5,0,.5,1]:verts.append((k*w,(t-.5)*s[1],((1-abs(k))*.6*math.sin(math.pi*t)-t*t*.7)*s[2]))
   for j in range(10):
-   for k in range(2):
-    a=j*3+k;faces.extend([[a,a+3,a+1],[a+1,a+3,a+4]])
+   for k in range(4):
+    a=j*5+k;faces.extend([[a,a+5,a+1],[a+1,a+5,a+6]])
   # Weld pole vertices and drop zero-area triangles.
   unique=[];mapping={};remap=[]
   for v in verts:
@@ -126,17 +135,36 @@ def shape(part):
    if key not in mapping:mapping[key]=len(unique);unique.append(v)
    remap.append(mapping[key])
   faces=[[remap[i]for i in f]for f in faces if len(set(remap[i]for i in f))==3];verts=unique
- elif kind=='roundedBox':
-  radius=min(s)*.3;seg=6
+ elif kind in('roundedBox','cushion','curvedPanel'):
+  cushion=kind=='cushion';radius=min(s)*(.46 if cushion else .3)
+  def steps(length):
+   half=length/2;r=min(radius,half*.98)
+   return sorted(set([-half,-half+r*.134,-half+r*.5,-half+r,-half+r+(length-2*r)*.25,0,half-r-(length-2*r)*.25,half-r,half-r*.5,half-r*.134,half]))
   for axis in range(3):
-   others=[i for i in range(3)if i!=axis]
+   others=[i for i in range(3)if i!=axis];xs=steps(s[others[0]]);ys=steps(s[others[1]])
    for sign in[-1,1]:
     start=len(verts)
-    for j in range(seg+1):
-     for i in range(seg+1):
-      v=[0.,0.,0.];v[axis]=sign*s[axis]/2;v[others[0]]=(i/seg-.5)*s[others[0]];v[others[1]]=(j/seg-.5)*s[others[1]];inner=[max(-s[k]/2+radius,min(s[k]/2-radius,v[k]))for k in range(3)];delta=[v[k]-inner[k]for k in range(3)];length=math.sqrt(sum(q*q for q in delta));verts.append(tuple(inner[k]+delta[k]/length*radius for k in range(3)))
-    for j in range(seg):
-     for i in range(seg):a=start+j*(seg+1)+i;faces.extend([[a,a+1,a+seg+1],[a+1,a+seg+2,a+seg+1]])
+    for j,yy in enumerate(ys):
+     for i,xx in enumerate(xs):
+      v=[0.,0.,0.];v[axis]=sign*s[axis]/2;v[others[0]]=xx;v[others[1]]=yy;inner=[max(-s[k]/2+radius,min(s[k]/2-radius,v[k]))for k in range(3)];delta=[v[k]-inner[k]for k in range(3)];length=math.sqrt(sum(q*q for q in delta));q=[inner[k]+delta[k]/length*radius for k in range(3)]
+      if cushion:
+       u=xx/s[others[0]]+.5;t=yy/s[others[1]]+.5;bulge=max(0,math.sin(math.pi*u)*math.sin(math.pi*t))**.8
+       q[axis]+=sign*min(s)*(.15 if part.get('pillow')else .075)*bulge
+       if part.get('pillow'):
+        edge=max(0,1-min(u,1-u,t,1-t)*7);q[axis]+=sign*.0025*math.sin(u*33+t*17)*bulge*edge
+      if kind=='curvedPanel':q[2]-=part.get('curve',.1)*(q[0]/(s[0]/2))**2
+      verts.append(tuple(q))
+    row=len(xs)
+    for j in range(len(ys)-1):
+     for i in range(row-1):a=start+j*row+i;faces.extend([[a,a+1,a+row],[a+1,a+row+1,a+row]])
+ elif kind=='cloth':
+  nx,nz=20,14
+  for j in range(nz+1):
+   v=j/nz
+   for i in range(nx+1):
+    u=i/nx;x=(u-.5)*s[0];z=(v-.5)*s[2];drop=-s[1]*(max(0,.43-u)/.43)**.85-.10*max(0,(u-.6)/.4);fold=(.008+.012*max(0,.43-u)) *math.sin(v*math.pi*8+u*3);verts.append((x,drop+fold,z))
+  for j in range(nz):
+   for i in range(nx):a=j*(nx+1)+i;faces.extend([[a,a+nx+1,a+1],[a+1,a+nx+1,a+nx+2]])
  elif kind=='box':
   verts=[(x*s[0]/2,y*s[1]/2,z*s[2]/2)for x,y,z in[(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]]
   faces=[[0,3,2,1],[4,5,6,7],[0,4,7,3],[1,2,6,5],[0,1,5,4],[3,7,6,2]]
@@ -151,12 +179,13 @@ def shape(part):
   for j in range(rings-2):
    for i in range(seg):a=1+j*seg+i;b=1+j*seg+(i+1)%seg;faces.append([a,b,b+seg,a+seg])
  elif kind in('cylinder','rod'):
-  seg=20
+  seg=12 if kind=='rod'else 48 if s[0]>.12 else 24
   if kind=='rod':
    a=part['a'];b=part['b'];delta=[b[i]-a[i]for i in range(3)];length=math.sqrt(sum(v*v for v in delta));axis=[v/length for v in delta];test=[0,1,0]if abs(axis[1])<.9 else[1,0,0]
    u=[axis[1]*test[2]-axis[2]*test[1],axis[2]*test[0]-axis[0]*test[2],axis[0]*test[1]-axis[1]*test[0]];l=math.sqrt(sum(v*v for v in u));u=[v/l for v in u];v=[axis[1]*u[2]-axis[2]*u[1],axis[2]*u[0]-axis[0]*u[2],axis[0]*u[1]-axis[1]*u[0]]
-   for center in[a,b]:
-    for i in range(seg):angle=i*math.pi*2/seg;verts.append(tuple(center[k]+part['r']*(math.cos(angle)*u[k]+math.sin(angle)*v[k])for k in range(3)))
+   for j,center in enumerate([a,b]):
+    radius=part.get('r2',part['r'])if j else part['r']
+    for i in range(seg):angle=i*math.pi*2/seg;verts.append(tuple(center[k]+radius*(math.cos(angle)*u[k]+math.sin(angle)*v[k])for k in range(3)))
   else:
    for yy,rr in[(-s[1]/2,s[0]),(s[1]/2,s[2])]:
     for i in range(seg):a=i*math.pi*2/seg;verts.append((rr*math.cos(a),yy,rr*math.sin(a)))
@@ -165,7 +194,7 @@ def shape(part):
  else:raise ValueError(kind)
  if kind not in('rod','tube'):
   verts=[tuple(rotate(v,part.get('rotation',[0,0,0]))[i]+part['p'][i]for i in range(3))for v in verts]
- if kind not in('leaf','vessel','shade','lathe','tube','torus'):
+ if kind not in('leaf','cloth','vessel','shade','lathe','tube','torus'):
   center=part.get('p',[(part['a'][i]+part['b'][i])/2 for i in range(3)] if kind=='rod' else [0,0,0])
   for f in faces:
    a,b,c=[verts[i]for i in f[:3]];u=[b[k]-a[k]for k in range(3)];v=[c[k]-a[k]for k in range(3)];normal=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];mid=[sum(verts[i][k]for i in f)/len(f)-center[k]for k in range(3)]

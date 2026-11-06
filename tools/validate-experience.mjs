@@ -10,7 +10,7 @@ assert.ok(existsSync(new URL('../dist/assets/exterior/Veil-of-Light-Exterior-Moo
 console.log('Three original catalogue schemes, 42 finish entries, three lighting presets, all moodboard assets, and unchanged architectural source verified.');
 const manifest=JSON.parse(readFileSync(new URL('../dist/assets/optimized/manifest.json',import.meta.url)));
 assert.ok(manifest.shell.bytes<9_000_000,'Keep the architectural shell under 9 MB');
-const nativeHashes=new Set();for(const id of ['earth','chalk','canopy']){const s=manifest.schemes[id];assert.ok(s.nativeVerified);assert.ok(s.bytes<1_100_000,'Each on-demand interior stays under 1.1 MB');assert.ok(s.triangles>50000);nativeHashes.add(s.nativeSHA256);assert.equal(readFileSync(new URL('../dist/assets/optimized/'+id+'.glb',import.meta.url)).length,s.bytes);}
+const nativeHashes=new Set();for(const id of ['earth','chalk','canopy']){const s=manifest.schemes[id];assert.ok(s.nativeVerified);assert.ok(s.bytes<1_850_000,'Detailed on-demand interiors stay under 1.85 MB');assert.ok(s.triangles>50000);nativeHashes.add(s.nativeSHA256);assert.equal(readFileSync(new URL('../dist/assets/optimized/'+id+'.glb',import.meta.url)).length,s.bytes);}
 assert.equal(nativeHashes.size,3,'Distinct verified native files are required for all schemes');
 assert.ok(readFileSync(new URL('../dist/assets/surfaces/daylight.hdr',import.meta.url)).length<150000,'Captured lighting stays small');
 console.log('Three distinct native exports, compressed model budgets and small captured-lighting asset verified.');

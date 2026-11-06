@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-const limits={Living:[-43.1,-37.12,-8.9,-4.18],Dining:[-43.1,-38.78,-4.78,-1.82],Kitchen:[-41,-37.8,-2.8,-.05],'Guest bedroom':[-47.28,-43.35,-4.74,-1.63],'Loft bedroom':[-43.15,-37.04,-8.8,-2.8],'Loft study':[-43.15,-37.1,-8.85,-7.05],Terrace:[-47.3,-36.95,-11.03,-9.05],Entry:[-44.5,-38,-.4,.7]};
+const limits={Living:[-43.1,-37.12,-8.9,-4.18],Dining:[-43.1,-38.78,-4.78,-1.82],Kitchen:[-41,-37.8,-2.8,-.05],'Guest bedroom':[-47.28,-43.35,-4.74,-1.63],'Loft bedroom':[-43.12,-37.04,-7.12,-2.8],'Loft study':[-43.10,-41.2,-6.3,-4.6],Balcony:[-43.1,-37.1,-8.9,-7.25],Terrace:[-47.3,-36.95,-11.03,-9.05],Entry:[-44.5,-38,-.4,.7]};
 const protectedZones=[[-43.22,-41.0,-2.22,.1],[-38.95,-37.8,-3.98,-2.77],[-46.1,-45.05,-7.3,-6.13]];
 export function createFurnitureEditor({scene,renderer,getCamera,controls,interior,onEnable,onChange,onSelect,filterHit}){
- const controller=new AbortController(),STORAGE='veil-of-light-native-4-'+interior.scheme;document.querySelector('#edit-furniture').checked=false;document.querySelector('#furniture-controls').hidden=true;
+ const controller=new AbortController(),STORAGE='veil-of-light-furniture-7-'+interior.scheme;document.querySelector('#edit-furniture').checked=false;document.querySelector('#furniture-controls').hidden=true;
  const groups=interior.movable,$=s=>document.querySelector(s),select=$('#furniture-select'),ray=new THREE.Raycaster(),mouse=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);let enabled=false,selected=null,drag=null,undo=[],helper=null;
  select.replaceChildren();const byId=new Map(groups.map(g=>[g.userData.itemId,g]));for(const g of groups){const option=document.createElement('option');option.value=g.userData.itemId;option.textContent=`${g.userData.room} · ${g.userData.name||g.name}`;select.append(option);}
  const state=()=>groups.map(g=>({id:g.userData.itemId,x:g.position.x,z:g.position.z,rotation:g.rotation.y}));

@@ -2,7 +2,7 @@
 
 [Explore the villa](https://jplovensa.github.io/veil-of-light/)
 
-An interactive Three.js villa based on the supplied SketchUp architecture and the original To Breathe catalogue moodboards: Mediterranean (page 19), Concrete Industrial (page 20), and Modern Tropical (page 21). Each scheme has separately rebuilt furniture, joinery features and decor across ten spaces. Sofas, chairs, tables, pendants, beds, vanities and shelving change in form and construction as well as colour.
+An interactive Three.js villa based on the supplied SketchUp architecture and the original To Breathe catalogue moodboards: Mediterranean (page 19), Concrete Industrial (page 20), and Modern Tropical (page 21). Each scheme has separately rebuilt furniture, joinery features and decor across eleven spaces, including a separate upper balcony. Sofas, chairs, tables, pendants, beds, vanities and shelving change in form and construction as well as colour.
 
 Source bathroom door assemblies, hardware, built-in kitchen, sanitary fittings, glazing, arches and stair remain at their original positions. Original loose furniture is replaced. Four dining chairs face the table. These are coordinated visual design studies; source accuracy does not establish fabrication dimensions or product specifications.
 
@@ -26,10 +26,18 @@ The initial screen is a small static preview. It appears before the 3D libraries
 
 Run `python3 -m http.server 8765 --directory dist`, then open http://localhost:8765.
 
-Run `node tools/validate-interior.mjs` and `node tools/validate-experience.mjs`. These check all three schemes, ten spaces, inward dining-chair directions, finite geometry, original architecture checksum, reference boards and release payload budgets.
+Run `node tools/validate-interior.mjs` and `node tools/validate-experience.mjs`. These check all three schemes, eleven spaces, inward dining-chair directions, finite geometry, original architecture checksum, reference boards and release payload budgets.
 
 On macOS with SketchUp 2025 installed, `python3 tools/build-native-schemes.py /path/to/original.skp /path/to/output` builds, reopens and exports the three native schemes. `node tools/optimize-viewer-models.mjs` compresses the browser models; build-time dependencies are documented in that file. `node tools/prepare-lightweight-surfaces.mjs` downsamples the captured environment. Deployment checks source modules and publishes `dist/` to GitHub Pages.
 
 ## Credits
 
 Original architecture, catalogue boards and Fjäll identity were supplied by the user. Photograph-based CC0 material and HDR environment credits are in `dist/assets/realism/credits.json`. Three.js and meshoptimizer license notices are retained with the bundled libraries. An older generated atmosphere image is retained as an archive; the active Moodboard dialog uses original proposal pages.
+
+## Proposal furniture refinement
+
+The current furniture revision adds shaped loose upholstery with perimeter piping, relaxed cushions and draped throws. The tropical sofa uses a slim open teak/cane frame; Mediterranean seating uses an ivory upholstered base; the industrial scheme retains a grey L sectional. Dining chairs now have curved timber backs, tapered legs and separate seat cushions or cane panels. Ceramics have smoother hollow profiles, and books, trays and small plants are composed as grouped tabletop arrangements.
+
+The work desk and chair are inside the enclosed loft, on the 2.95 m source floor. The rear balcony remains on its original 2.90 m floor and has a separate room view. Upper storage is beside the indoor work area, with the main aisle and glazing access kept clear. The exported layout has approximately 0.75 m between the work chair and bench and 1.10 m between the bench and bed. These measurements describe the model layout.
+
+`tools/validate-upstairs.mjs` checks the actual optimized furniture exports against wood-floor triangles taken from the original architectural model. It also guards the indoor desk position and the two circulation gaps. Its build-time dependencies are @gltf-transform/core@4.5.1, @gltf-transform/extensions@4.5.1 and meshoptimizer@1.3.0; set VEIL_OPTIMIZER_ROOT to their node_modules directory. GitHub Actions installs these only for validation. Each detailed interior stays below 1.85 MB and loads on demand; the architecture, small shared textures and renderer are reused.
