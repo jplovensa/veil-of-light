@@ -1,11 +1,18 @@
-import {ShaderPass} from './vendor/postprocessing/ShaderPass.js';
-import {Vector2} from 'three';
-// Fast edge antialiasing after tone mapping, including thin cane strands and piping.
-export function makeEdgeSmoothing(){return new ShaderPass({uniforms:{tDiffuse:{value:null},resolution:{value:new Vector2(1,1)}},vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`
- uniform sampler2D tDiffuse;uniform vec2 resolution;varying vec2 vUv;
- void main(){
-  vec3 nw=texture2D(tDiffuse,vUv+vec2(-1.,-1.)*resolution).rgb,ne=texture2D(tDiffuse,vUv+vec2(1.,-1.)*resolution).rgb,sw=texture2D(tDiffuse,vUv+vec2(-1.,1.)*resolution).rgb,se=texture2D(tDiffuse,vUv+vec2(1.,1.)*resolution).rgb,m=texture2D(tDiffuse,vUv).rgb;
-  vec3 luma=vec3(.299,.587,.114);float a=dot(nw,luma),b=dot(ne,luma),c=dot(sw,luma),d=dot(se,luma),e=dot(m,luma);float lo=min(e,min(min(a,b),min(c,d))),hi=max(e,max(max(a,b),max(c,d)));
-  vec2 dir=vec2(-((a+b)-(c+d)),(a+c)-(b+d));float reduce=max((a+b+c+d)*.03125,.0078125);float inv=1./(min(abs(dir.x),abs(dir.y))+reduce);dir=clamp(dir*inv,vec2(-8.),vec2(8.))*resolution;
-  vec3 aa=.5*(texture2D(tDiffuse,vUv+dir*(-.1666667)).rgb+texture2D(tDiffuse,vUv+dir*.1666667).rgb);vec3 bb=aa*.5+.25*(texture2D(tDiffuse,vUv-dir*.5).rgb+texture2D(tDiffuse,vUv+dir*.5).rgb);float y=dot(bb,luma);gl_FragColor=vec4(y<lo||y>hi?aa:bb,1.);
- }`});}
+import * as T from 'three';
+import {EffectComposer} from './vendor/postprocessing/EffectComposer.js';
+import {RenderPass} from './vendor/postprocessing/RenderPass.js';
+import {SSAOPass} from './vendor/postprocessing/SSAOPass.js';
+import {OutputPass} from './vendor/postprocessing/OutputPass.js';
+export function defaultQuality(){return new URLSearchParams(location.search).get('quality')==='lite'||innerWidth<700||(navigator.deviceMemory&&navigator.deviceMemory<4)?'lite':'refined';}
+export function createRenderSystem(renderer,scene,camera,onChange){
+ let quality=defaultQuality(),composer,pass,ao;const select=document.querySelector('#render-quality');select.value=quality;
+ function setup(){if(composer)return;composer=new EffectComposer(renderer);composer.renderTarget1.samples=composer.renderTarget2.samples=Math.min(4,renderer.capabilities.maxSamples);pass=new RenderPass(scene,camera);composer.addPass(pass);ao=new SSAOPass(scene,camera,innerWidth,innerHeight,12);ao.kernelRadius=.38;ao.minDistance=.001;ao.maxDistance=.12;
+  // Glass and editor lines are excluded from the contact-shadow depth pass.
+  const base=ao.overrideVisibility.bind(ao);ao.overrideVisibility=()=>{base();scene.traverse(o=>{if(o.isMesh){const mats=Array.isArray(o.material)?o.material:[o.material];if(mats.every(m=>m.transparent&&m.opacity<.5))o.visible=false;}});};
+  ao.copyMaterial.fragmentShader=ao.copyMaterial.fragmentShader.replace('gl_FragColor = opacity * texel;','gl_FragColor = vec4(mix(vec3(1.0), texel.rgb, 0.65), 1.0);');composer.addPass(ao);composer.addPass(new OutputPass());
+ }
+ function resize(){const cap=quality==='refined'?2:1.25,pixelBudget=quality==='refined'?2600000:1600000;renderer.setPixelRatio(Math.min(devicePixelRatio,cap,Math.sqrt(pixelBudget/(innerWidth*innerHeight))));renderer.setSize(innerWidth,innerHeight);if(quality==='refined'){setup();composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);const scale=renderer.getPixelRatio()*.65;ao.setSize(Math.round(innerWidth*scale),Math.round(innerHeight*scale));}renderer.domElement.dataset.quality=quality;}
+ function setQuality(value){if(value==='lite'&&composer){for(const p of composer.passes)p.dispose?.();composer.dispose();composer=pass=ao=null;}quality=value;select.value=value;resize();onChange();}
+ select.onchange=e=>setQuality(e.target.value);resize();
+ return{get quality(){return quality;},resize,render(camera,{mode,cutaway}){if(quality==='lite'){renderer.render(scene,camera);return;}setup();pass.camera=camera;ao.camera=camera;ao.enabled=mode!=='plan'&&!cutaway&&camera.position.y<5.2;composer.render();},setQuality};
+}

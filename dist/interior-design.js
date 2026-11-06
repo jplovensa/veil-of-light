@@ -15,11 +15,12 @@ export function buildInteriorDesign(scheme='earth'){
  const items=[];let item;
  const begin=(id,room,name,p=[0,0,0],ry=0,movable=false)=>{item={id,room,name,pivot:p,rotation:ry,movable,parts:[]};items.push(item);};
  const pt=(p)=>{const [x,y,z]=p,[a,b,c]=item.pivot,r=item.rotation;return[a+x*Math.cos(r)+z*Math.sin(r),b+y,c-x*Math.sin(r)+z*Math.cos(r)];};
- const part=(shape,p,s,m,r=[0,0,0],extra={})=>item.parts.push({shape,p:pt(p),s,m,rotation:[r[0],r[1]+item.rotation,r[2]],...extra});
+ const rotateLocal=(v,r)=>{let[x,y,z]=v;const[a,b,c]=r;[x,y]=[x*Math.cos(c)-y*Math.sin(c),x*Math.sin(c)+y*Math.cos(c)];[x,z]=[x*Math.cos(b)+z*Math.sin(b),-x*Math.sin(b)+z*Math.cos(b)];[y,z]=[y*Math.cos(a)-z*Math.sin(a),y*Math.sin(a)+z*Math.cos(a)];return[x,y,z];};
+ const part=(shape,p,s,m,r=[0,0,0],extra={})=>{const basis=[[1,0,0],[0,1,0],[0,0,1]].map(v=>{const[x,y,z]=rotateLocal(v,r),a=item.rotation;return[x*Math.cos(a)+z*Math.sin(a),y,-x*Math.sin(a)+z*Math.cos(a)];});item.parts.push({shape,p:pt(p),s,m,rotation:[r[0],r[1]+item.rotation,r[2]],basis,...extra});};
  const box=(p,s,m,r=0)=>part('box',p,s,m,[0,r,0]);
  const soft=(p,s,m='linen',r=[0,0,0])=>part('roundedBox',p,s,m,r);
  const roundedOutline=(w,d,r,y=0)=>{const points=[];for(const [x,z,start]of [[w/2-r,d/2-r,0],[-w/2+r,d/2-r,Math.PI/2],[-w/2+r,-d/2+r,Math.PI],[w/2-r,-d/2+r,Math.PI*1.5]])for(let j=0;j<7;j++){const a=start+j/6*Math.PI/2;points.push([x+Math.cos(a)*r,y,z+Math.sin(a)*r]);}return [...points,points[0]];};
- const upholstery=(p,s,m='linen',rotation=[0,0,0],pillow=false)=>{part('cushion',p,s,m,rotation,{pillow});const axis=s[1]<s[2]?'seat':'back',r=Math.min(...s)*.46;let path=roundedOutline(s[0]*.997,(axis==='seat'?s[2]:s[1])*.997,r,0);if(axis==='back')path=path.map(([x,z,y])=>[x,y,z]);const local=q=>{const [a,b,c]=rotation;let[x,y,z]=q;[y,z]=[y*Math.cos(a)-z*Math.sin(a),y*Math.sin(a)+z*Math.cos(a)];[x,z]=[x*Math.cos(b)+z*Math.sin(b),-x*Math.sin(b)+z*Math.cos(b)];[x,y]=[x*Math.cos(c)-y*Math.sin(c),x*Math.sin(c)+y*Math.cos(c)];return[x+p[0],y+p[1],z+p[2]];};tube(path.map(local),.0018,m);};
+ const upholstery=(p,s,m='linen',rotation=[0,0,0],pillow=false)=>{part('cushion',p,s,m,rotation,{pillow});const axis=s[1]<s[2]?'seat':'back',r=Math.min(...s)*.46;let path=roundedOutline(s[0]*.997,(axis==='seat'?s[2]:s[1])*.997,r,0);if(axis==='back')path=path.map(([x,z,y])=>[x,y,z]);const local=q=>{const v=rotateLocal(q,rotation);return v.map((x,i)=>x+p[i]);};tube(path.map(local),.0018,m);};
  const bentBack=(p,s,m,curve=.1)=>part('curvedPanel',p,s,m,[0,0,0],{curve});
  const leg=(a,b,r,m,r2=r*.72)=>item.parts.push({shape:'rod',a:pt([a[0],a[1]<.04?.003:a[1],a[2]]),b:pt(b),r:r2,r2:r,m});
  const book=(p,w=.27,d=.2,h=.027,cover='olive',ry=0)=>{soft([p[0],p[1]+h/2,p[2]],[w,h,d],'paper',[0,ry,0]);box([p[0],p[1]+.001,p[2]],[w+.006,.003,d+.007],cover,ry);box([p[0],p[1]+h,p[2]],[w+.006,.003,d+.007],cover,ry);};
@@ -85,14 +86,37 @@ export function buildInteriorDesign(scheme='earth'){
  function sideboard(id,room,p,w=1.8,ry=0){begin(id,room,industrial?'Oak sideboard on exposed steel frame':tropical?'Fluted teak console with cane doors':'Fluted timber console with recessed plinth',p,ry);box([0,.35,0],[w,.58,.36],'teakDark');box([0,.66,0],[w+.03,.04,.39],industrial?'stone':'teak');
   if(industrial){for(const x of[-w*.42,w*.42])for(const z of[-.13,.13])rod([x,.02,z],[x,.16,z],.012,'metal');for(const x of[-w*.25,w*.25])box([x,.36,.19],[w/2-.02,.54,.025],'teak');}
   else for(let i=0;i<Math.floor(w/.055);i++)box([-w/2+.04+i*.055,.36,.193],[.024,.53,.026],tropical&&i%3===0?'cane':'teak');decor([-.42,.69,0],true);vase([.34,.69,0],.22,'ceramic','bowl');}
- function bed(id,room,p,ry=0){begin(id,room,industrial?'Grey upholstered platform bed with steel feet':tropical?'Teak platform bed with olive linen throw':'Ivory upholstered platform bed with sand throw',p,ry,true);
-  for(const x of[-.72,.72])for(const z of[-.81,.81])cyl([x,.08,z],.025,.15,industrial?'metal':'teakDark');soft([0,.23,0],[1.85,.3,2.13],industrial?'boucle':tropical?'teak':'linen');soft([0,.46,0],[1.77,.24,2.03],'linen');soft([0,.585,-.12],[1.8,.065,1.8],'linen');for(const x of[-.44,.44])soft([x,.7,.64],[.78,.2,.48],'linen',[.1,0,x*.06]);for(const x of[-.43,.43])soft([x,.78,.84],[.7,.32,.13],x<0?'olive':'linen',[-.1,0,0]);soft([0,.63,-.62],[1.82,.045,.57],'olive');for(let i=0;i<5;i++)rod([-.86+i*.43,.662,-.88],[-.86+i*.43,.662,-.37],.003,tropical?'linen':'olive');}
+ function bed(id,room,p,ry=0){
+  begin(id,room,'Shelter of Sky bed · draped duvet and sculpted loose pillows',p,ry,true);
+  // Asset preserves the reference bed's actual folds, mattress and pillow contours.
+  for(let piece=0;piece<7;piece++)part('assetMesh',[0,0,0],[1.85,.9,2.13],piece===0?'olive':piece===6?'boucle':'linen',[0,0,0],{asset:'shelter-bed',piece});
+ }
  function bedWall(id,room,p,w=2.65,ry=0){begin(id,room,industrial?'Concrete bed wall with ash flutes and linear light':tropical?'Full-height teak slat bed wall and upholstered headrail':'Soft linen headboard against limewashed wall',p,ry);if(!industrial&&!tropical){soft([0,.7,0],[w,.94,.1],'linen');}else{box([0,1.0,-.025],[w,1.96,.07],industrial?'stone':'teakDark');for(let j=0;j<Math.floor(w/.095);j++)box([-w/2+.05+j*.095,1.29,.025],[.025,1.27,.035],industrial?'teakDark':'teak');soft([0,.68,.08],[w,.35,.09],industrial?'boucle':'linen');box([0,.94,.065],[w-.04,.018,.018],'light');}}
  function art(id,room,p,ry){begin(id,room,industrial?'Layered monochrome relief artwork':'Textured linen and earth-tone wall relief',p,ry);box([0,0,0],[.78,.8,.035],industrial?'metal':'teakDark');box([0,0,.025],[.72,.74,.02],'linen');for(let j=0;j<3;j++)box([-.23+j*.22,-.18+j*.12,.045],[.22,.24,.02],industrial?(j%2?'stone':'metal'):(j%2?'clay':'ceramic'));}
  function vanity(id,room,p,ry){begin(id,room,industrial?'Concrete vanity with open towel shelf and backlit oval mirror':tropical?'Teak vanity with cane front and open linen shelf':'Floating travertine vanity with oval brass mirror',p,ry);
   if(industrial){box([0,.67,0],[.7,.28,.46],'stone');for(const x of[-.31,.31])box([x,.4,0],[.07,.5,.43],'stone');box([0,.2,0],[.62,.055,.4],'teakDark');}
   else{box([0,.57,0],[.7,.34,.43],tropical?'teak':'stone');box([0,.8,0],[.75,.055,.49],'stone');if(tropical){box([0,.58,.226],[.6,.25,.018],'cane');box([0,.23,0],[.65,.045,.4],'teak');}}
   soft([-.16,.27,.02],[.24,.09,.25],'linen');soft([.12,.27,.02],[.22,.07,.24],'linen');lathe([0,.87,.02],.185,.13,'ceramic',[[0,-.5],[.55,-.5],[1,.36],[1,.5],[.91,.5],[.56,-.25],[0,-.3]]);rod([.22,.83,-.12],[.22,1.1,-.12],.011,industrial?'metal':'brass');rod([.22,1.1,-.12],[.08,1.1,-.12],.011,industrial?'metal':'brass');arch([0,1.51,-.216],.6,.84,.035,industrial?'light':tropical?'teak':'brass');arch([0,1.51,-.19],.555,.795,.015,'mirror');decor([-.27,.83,.02]);for(const x of[-.4,.4]){rod([x,1.38,-.16],[x,1.72,-.16],.013,industrial?'metal':'bronze');cyl([x,1.7,-.16],.025,.13,'light');}}
+ // New facade closure follows the source's 4.40 m inner arch. Rear balcony stays open above.
+ function facade(id,z,arched){
+  begin(id+'-glazing','Entry',id==='front'?'Front arched glass wall and dark bronze frame':'Rear ground-floor glass wall beneath balcony',[-40.05,0,z]);
+  const frame='bronze',h=2.55;
+  for(const x of[-2.2,-1.1,1.1,2.2])box([x,h/2,0],[.042,h,.065],frame);
+  for(const y of[.035,h])box([0,y,0],[4.4,.045,.085],frame);
+  for(const x of[-1.65,1.65])box([x,1.28,0],[1.055,2.43,.012],'glass');
+  if(arched){
+   const top=x=>3.5+Math.sqrt(Math.max(0,2.2*2.2-x*x));
+   for(let j=0;j<4;j++){const a=-2.2+j*1.1+.025,b=a+1.05,outline=[[a,h+.025],[b,h+.025]];for(let k=0;k<=20;k++){const x=b-(b-a)*k/20;outline.push([x,top(x)-.025]);}part('polygonPanel',[0,0,0],[4.4,5.7,.012],'glass',[0,0,0],{outline});}
+   for(const x of[-1.1,0,1.1]){const t=top(x);box([x,(h+t)/2,0],[.035,t-h,.055],frame);}
+   for(const x of[-2.2,2.2])box([x,(h+3.5)/2,0],[.042,3.5-h,.065],frame);
+   tube(Array.from({length:65},(_,k)=>{const a=Math.PI*k/64;return[2.2*Math.cos(a),3.5+2.2*Math.sin(a),0];}),.022,frame);
+   box([0,3.5,0],[4.4,.035,.055],frame);
+  }else{box([0,2.83,0],[4.4,.035,.055],frame);box([0,2.69,0],[4.35,.24,.012],'glass');}
+  for(const sign of[-1,1]){const leafId=id+'-door-'+(sign<0?'left':'right');begin(leafId,'Entry',(id==='front'?'Front entrance':'Rear terrace')+' · '+(sign<0?'left':'right')+' sliding glass door',[-40.05+sign*.55,0,z-.045]);item.facadeDoor={name:(id==='front'?'Front entrance':'Rear terrace')+' · '+(sign<0?'left':'right'),travel:[sign*1.05,0,0]};
+   box([0,1.28,0],[1.045,2.425,.012],'glass');for(const x of[-.54,.54])box([x,1.28,0],[.035,2.5,.055],frame);for(const y of[.03,2.53])box([0,y,0],[1.1,.035,.055],frame);for(const side of[-1,1])rod([-sign*.44,.94,side*.052],[-sign*.44,1.29,side*.052],.012,frame);
+  }
+ }
+ facade('front',-.065,true);facade('rear',-8.875,false);
  // Finishes follow the reference's actual material types, not just its colours.
  begin('ground-finish','Living',industrial?'Microcement ground floor':tropical?'Natural timber living floor':'Honed travertine ground floor');box([-40.05,.008,-4.55],[6.15,.016,8.9],tropical?'teak':'stone');
  begin('loft-finish','Loft bedroom',industrial?'Ash plank loft floor':'Natural timber loft floor');box([-40.05,2.954,-5.05],[6,.012,4.3],'teak');box([-37.39,2.954,-1.46],[.68,.012,2.35],'teak');
@@ -100,7 +124,7 @@ export function buildInteriorDesign(scheme='earth'){
  if(industrial){begin('living-concrete-wall','Living','Board-jointed concrete feature wall with form-tie details');box([-37.12,1.39,-6.2],[.025,2.73,2.7],'stone');for(const z of[-6.65,-5.75])box([-37.139,1.39,z],[.008,2.71,.008],'teakDark');for(const y of[.6,2.15])for(const z of[-7.15,-6.2,-5.25])part('cylinder',[-37.143,y,z],[.009,.002,.009],'metal',[0,0,Math.PI/2]);}
  else if(tropical){begin('living-timber-wall','Living','Vertical teak slat wall behind lounge');box([-37.12,1.39,-6.2],[.025,2.73,2.7],'teakDark');for(let j=0;j<28;j++)box([-37.145,1.39,-7.48+j*.095],[.027,2.7,.028],'teak');}
  begin('living-rug','Living',industrial?'Textured grey living rug':'Natural woven living rug',[-39.85,.023,-6.25],0,true);soft([0,0,0],[3.45,.018,3.3],'rug');
- begin('living-sofa','Living',industrial?'Tailored grey linen L sectional':tropical?'Open-frame teak and cane sofa with loose linen upholstery':'Low ivory slipcovered sofa with tailored loose cushions',[-37.73,0,-6.15],Math.PI/2,true);
+ begin('living-sofa','Living',industrial?'Tailored grey linen L sectional':tropical?'Open-frame teak and cane sofa with loose linen upholstery':'Low ivory slipcovered sofa with tailored loose cushions',[-38.03,0,-6.85],Math.PI/2,true);
  // Six tapered feet and a recessed frame give the upholstered mass a real shadow gap.
  for(const x of[-1.13,0,1.13])for(const z of[-.31,.31])leg([x,.025,z],[x,.23,z],.035,industrial?'metal':'teakDark',.023);
  if(tropical){
@@ -120,7 +144,7 @@ export function buildInteriorDesign(scheme='earth'){
  if(industrial){upholstery([-.82,.42,-.65],[.805,.2,.95],'linen');for(const x of[-1.13,-.5])leg([x,.025,-.97],[x,.22,-.97],.025,'metal',.014);}
  for(const [j,x,y,z,angle]of[[0,-1.02,.69,.17,-.18],[1,-.49,.64,.17,.14],[2,.22,.70,.17,-.11],[3,.91,.69,.17,.17]])upholstery([x,y,z],[j===1?.37:.44,j===1?.34:.43,.14],tropical?(j===0||j===3?'olive':'linen'):industrial?(j===0?'olive':'boucle'):(j%2?'linen':'olive'),[.15,.02,angle],true);
  part('cloth',[-1.28,.7,-.06],[.57,.48,.66],tropical?'olive':industrial?'olive':'boucle');
- begin('living-table','Living',industrial?'Nested concrete tables on tubular black steel rings':tropical?'Low round teak drum coffee table':'Round timber coffee table on twin fluted drums',[-39.55,0,-6.15],0,true);
+ begin('living-table','Living',industrial?'Nested concrete tables on tubular black steel rings':tropical?'Low round teak drum coffee table':'Round timber coffee table on twin fluted drums',[-39.55,0,-6.65],0,true);
  if(industrial){for(const [x,z,r,y]of[[.12,0,.62,.42],[-.45,-.35,.35,.29]]){ring([x,.08,z],r-.09,.013,'metal');for(const a of[0,2.1,4.2])rod([x+Math.cos(a)*(r-.09),.08,z+Math.sin(a)*(r-.09)],[x+Math.cos(a)*(r-.09),y,z+Math.sin(a)*(r-.09)],.012,'metal');cyl([x,y,z],r,.055,'stone');}}
  else if(tropical){cyl([0,.2,0],.48,.34,'teakDark');cyl([0,.41,0],.71,.07,'teak');}
  else{for(const x of[-.33,.33]){cyl([x,.2,0],.215,.34,'teak');for(let j=0;j<16;j++){const a=j*Math.PI/8;rod([x+Math.cos(a)*.21,.04,Math.sin(a)*.21],[x+Math.cos(a)*.21,.36,Math.sin(a)*.21],.01,'teak');}}cyl([0,.4,0],.73,.065,'teak');}
@@ -129,7 +153,7 @@ export function buildInteriorDesign(scheme='earth'){
  book([.24,top+.004,-.19],.29,.22,.023,industrial?'metal':'olive',.15);book([.24,top+.032,-.19],.265,.205,.02,'linen',-.06);tablePlant([.27,top+.056,-.18],.17);
  if(industrial){chair('living-chair','Living',[-41.15,0,-7.05],-Math.PI/2,true);}else{chair('living-chair-a','Living',[-41.05,0,-7.05],-Math.PI/2,true);chair('living-chair-b','Living',[-40.95,0,-5.25],-Math.PI/2,true);}
  sideboard('living-console','Living',[-42.78,0,-6.3],1.65,Math.PI/2);shelf('living-shelves','Living',[-42.82,0,-8],Math.PI/2);art('living-art','Living',[-43.04,1.7,-6.2],Math.PI/2);
- plant('living-plant','Living',[-37.57,0,-8.12],1.95);if(!industrial)plant('living-olive','Living',[-42.55,0,-4.8],1.65);
+ plant('living-plant','Living',[-37.57,0,-8.62],1.95);if(!industrial)plant('living-olive','Living',[-42.55,0,-4.8],1.65);
  pendant('living-pendant','Living',[-39.45,2.37,-6.2],industrial?.42:tropical?.54:.34);
  begin('dining-table','Dining',industrial?'Oak dining table on black trestle frame':'Solid timber dining table with softened rectangular top',[-40.3,0,-3.2],0,true);soft([0,.76,0],[1.55,.065,.9],'teak');if(industrial){for(const x of[-.57,.57]){rod([x,.03,-.3],[x,.72,-.3],.025,'metal');rod([x,.03,.3],[x,.72,.3],.025,'metal');rod([x,.13,-.3],[x,.13,.3],.025,'metal');}}else for(const x of[-.59,.59])for(const z of[-.29,.29])rod([x,.02,z],[x,.73,z],.04,'teak');
  for(const [j,seat]of[[-40.3,0,-4.13],[-40.3,0,-2.27],[-41.43,0,-3.2],[-39.17,0,-3.2]].entries()){const angle=Math.atan2(seat[0]+40.3,seat[2]+3.2);chair('dining-chair-'+j,'Dining',seat,angle);item.facing={position:seat,rotation:angle,target:[-40.3,0,-3.2]};}
@@ -144,7 +168,7 @@ export function buildInteriorDesign(scheme='earth'){
  sideTable('guest-side-a','Guest bedroom',[-46.75,0,-4.42]);sideTable('guest-side-b','Guest bedroom',[-46.75,0,-1.92]);sideboard('guest-storage','Guest bedroom',[-43.59,0,-2.5],1.2,-Math.PI/2);plant('guest-plant','Guest bedroom',[-43.7,0,-4.22],1.2);
  begin('guest-curtains','Guest bedroom','Full-height soft linen curtains');for(const x of[-46.97,-43.57])for(let j=0;j<5;j++)soft([x+j*.025,1.4,-1.53],[.035,2.65,.045],'linen');
  bed('loft-bed','Loft bedroom',[-38.35,2.95,-4.88],Math.PI/2);bedWall('loft-headwall','Loft bedroom',[-37.14,2.99,-4.88],2.55,-Math.PI/2);sideTable('loft-side-a','Loft bedroom',[-37.63,2.95,-6.23]);sideTable('loft-side-b','Loft bedroom',[-37.63,2.95,-3.48]);
- begin('loft-bench','Loft bedroom',industrial?'Steel-framed upholstered bed-end bench':'Low timber bed-end bench with linen pad',[-40.72,2.95,-4.88],Math.PI/2,true);soft([0,.43,0],[1.45,.12,.42],industrial?'boucle':'linen');for(const x of[-.59,.59])for(const z of[-.14,.14])rod([x,.02,z],[x,.4,z],industrial?.014:.032,industrial?'metal':'teak');
+ begin('loft-bench','Loft bedroom',industrial?'Steel-framed upholstered bed-end bench':'Low timber bed-end bench with linen pad',[-39.9,2.95,-4.88],Math.PI/2,true);soft([0,.43,0],[1.45,.12,.42],industrial?'boucle':'linen');for(const x of[-.59,.59])for(const z of[-.14,.14])rod([x,.02,z],[x,.4,z],industrial?.014:.032,industrial?'metal':'teak');
  sideboard('loft-storage','Loft bedroom',[-42.83,2.95,-3.67],1.12,-Math.PI/2);chair('loft-chair','Balcony',[-41.85,2.9,-8.02],-.9,true);plant('loft-plant','Balcony',[-37.65,2.9,-8.26],1.3);
  begin('study-desk','Loft study',industrial?'Oak writing desk on black metal trestles':'Timber writing desk with fluted drawer',[-42.77,2.95,-5.45],-Math.PI/2,true);box([0,.74,0],[1.55,.055,.48],'teak');for(const x of[-.64,.64])for(const z of[-.15,.15])rod([x,.02,z],[x,.71,z],industrial?.014:.03,industrial?'metal':'teak');box([-.2,.68,0],[.72,.09,.35],'teakDark');box([-.35,.78,0],[.24,.03,.18],'linen');lamp([.51,.78,0]);chair('study-chair','Loft study',[-41.93,2.95,-5.45],Math.PI/2);
  if(tropical){begin('ceiling-fan','Loft bedroom','Three-blade timber ceiling fan with dark motor',[-39.45,6.05,-5.0]);rod([0,0,0],[0,.36,0],.018,'metal');cyl([0,0,0],.1,.12,'metal');for(let j=0;j<3;j++){const a=j*Math.PI*2/3;soft([Math.cos(a)*.4,0,Math.sin(a)*.4],[.77,.025,.13],'teak',[0,-a,0]);}}
@@ -154,5 +178,5 @@ export function buildInteriorDesign(scheme='earth'){
  begin('terrace-table','Terrace',industrial?'Concrete terrace table':'Timber terrace side table',[-42.05,0,-9.9],0,true);cyl([0,.22,0],.28,.42,industrial?'stone':'teak');vase([0,.44,0],.2,'clay');plant('terrace-plant','Terrace',[-46.95,0,-10.6],1.5);
  begin('entry-rug','Entry','Natural fibre entrance mat',[-40.05,.026,.38],0,true);box([0,0,0],[1.45,.022,.58],'rug');plant('entry-plant','Entry',[-43.75,0,.35],1.1);
  const rooms=[{id:'living',name:'Living',eye:[-42.25,1.72,-4.4],target:[-39.35,.98,-6.35]},{id:'dining',name:'Dining & kitchen',eye:[-41.65,1.65,-4.55],target:[-38.5,.98,-1.7]},{id:'guest',name:'Guest bedroom',eye:[-43.9,1.65,-4.15],target:[-46.1,1,-3.1]},{id:'bath',name:'Guest bathroom',eye:[-45.75,1.62,-5.65],target:[-46.85,1.16,-6.3],fov:65},{id:'mainbath',name:'Main bathroom',eye:[-38.12,1.6,-3.95],target:[-37.27,1.05,-3.34],fov:65},{id:'entry',name:'Entry',eye:[-40.1,1.7,.5],target:[-40.1,1.1,-4.8]},{id:'loft',name:'Loft suite',eye:[-42.1,4.6,-3.1],target:[-38.7,3.9,-5.1]},{id:'study',name:'Loft study · indoors',eye:[-40.35,4.58,-4.3],target:[-42.6,3.68,-5.45]},{id:'balcony',name:'Upper balcony',eye:[-39.4,4.52,-8.6],target:[-41.85,3.65,-8.02]},{id:'terrace',name:'Terrace',eye:[-44.3,1.65,-10.7],target:[-40.2,.6,-9.85]}];
- return{version:'proposal-furniture-7',scheme,sourceBoardPage:{earth:19,chalk:20,canopy:21}[scheme],title:'Veil of Light · '+schemeNames[scheme],materials,items,rooms,hideOriginalRootIndices:[0,1,4,7,9,11,14],hideOriginalGltfNodes:[2,29,319,513,723,734,989],paletteOverrides:{'Unpainted':materials.limewash.color,'[Color D01]':materials.limewash.color,'[Color D01]1':materials.limewash.color,'[Color F07]':materials.limewash.color,'[0010_Snow]':materials.limewash.color}};
+ return{version:'sky-system-8',scheme,sourceBoardPage:{earth:19,chalk:20,canopy:21}[scheme],title:'Veil of Light · '+schemeNames[scheme],materials,items,rooms,hideOriginalRootIndices:[0,1,4,7,9,11,14],hideOriginalGltfNodes:[2,29,319,513,723,734,989],paletteOverrides:{'Unpainted':materials.limewash.color,'[Color D01]':materials.limewash.color,'[Color D01]1':materials.limewash.color,'[Color F07]':materials.limewash.color,'[0010_Snow]':materials.limewash.color}};
 }

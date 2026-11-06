@@ -28,27 +28,36 @@ def normalize(v):l=math.sqrt(sum(x*x for x in v))or 1;return tuple(x/l for x in 
 api.SUInitialize();model=Ref();status=C.c_int();call('SUModelCreateFromFileWithStatus',C.byref(model),str(args.source.resolve()).encode(),C.byref(status));root=ref('SUModelGetEntities',model)
 items={i['id']:i for i in spec['items']};buckets={};native=[];triangles=0
 
-def collect(ent,matrix,inherited,item):
+def collect(ent,matrix,inherited,item,part=None):
  global triangles
  for face in refs('SUEntitiesGetFaces',ent):
   mat=ref('SUFaceGetFrontMaterial',face)
   if not mat.ptr:mat=inherited
   name=string('SUMaterialGetName',mat).removeprefix('MT | ')if mat and mat.ptr else 'limewash'
   mesh=Ref();call('SUMeshHelperCreate',C.byref(mesh),face);nv=count('SUMeshHelperGetNumVertices',mesh);nt=count('SUMeshHelperGetNumTriangles',mesh);got=C.c_size_t();points=(V*nv)();normals=(V*nv)();inds=(C.c_size_t*(nt*3))();call('SUMeshHelperGetVertices',mesh,C.c_size_t(nv),points,C.byref(got));call('SUMeshHelperGetNormals',mesh,C.c_size_t(nv),normals,C.byref(got));call('SUMeshHelperGetVertexIndices',mesh,C.c_size_t(nt*3),inds,C.byref(got))
-  owner=items.get(item.get('parentId'),item);key=(owner['id']if owner['movable']else 'fixed-'+owner['room'],name);bucket=buckets.setdefault(key,{'positions':[],'normals':[],'uv':[],'indices':[],'lookup':{},'item':owner})
+  owner=items.get(item.get('parentId'),item);key=(owner['id'],name);bucket=buckets.setdefault(key,{'positions':[],'normals':[],'uv':[],'indices':[],'lookup':{},'item':owner})
   pivot=owner['pivot']if owner['movable']else[0,0,0];ids=[]
   for v,n in zip(points,normals):
    world=metres(apply(matrix,(v.x,v.y,v.z)));nn=apply(matrix,(n.x,n.y,n.z),0);normal=normalize((nn[0],nn[2],-nn[1]));pos=tuple(world[k]-pivot[k]for k in range(3));ax,ay,az=map(abs,normal)
-   tile=.048 if name=='cane'else 1.2 if name in('teak','teakDark')else .45 if name in('linen','olive','boucle','rug','cane')else 1.6
-   uv=(world[0]/tile,world[2]/tile)if ay>=ax and ay>=az else (world[2]/tile,world[1]/tile)if ax>=az else(world[0]/tile,world[1]/tile)
-   if name in('teak','teakDark')and ay<.7:uv=uv[::-1]
+   if part and part.get('p') and part.get('basis'):
+    delta=[world[k]-part['p'][k]for k in range(3)];local=[sum(delta[k]*part['basis'][axis][k]for k in range(3))for axis in range(3)];localNormal=[sum(normal[k]*part['basis'][axis][k]for k in range(3))for axis in range(3)];ax,ay,az=map(abs,localNormal)
+    if name in('leaf','leafLight')and part['shape']=='leaf':uv=(local[0]/part['s'][0]+.5,local[1]/part['s'][1]+.5)
+    elif name in('teak','teakDark'):
+     long=max(range(3),key=lambda k:part['s'][k]);other=2 if long==0 else 0;uv=(local[other]/1.2,local[long]/1.2)
+    else:
+     tile=.18 if name=='cane'else .45 if name in('linen','olive','boucle','rug')else 1.6
+     uv=(local[0]/tile,local[2]/tile)if ay>=ax and ay>=az else(local[2]/tile,local[1]/tile)if ax>=az else(local[0]/tile,local[1]/tile)
+   elif part and part['shape']=='rod'and name in('teak','teakDark'):
+    axis=normalize(tuple(part['b'][k]-part['a'][k]for k in range(3)));v=sum((world[k]-part['a'][k])*axis[k]for k in range(3));uv=((world[0]+world[2])/.8,v/1.2)
+   else:
+    tile=1.2 if name in('teak','teakDark')else .18 if name=='cane'else .45 if name in('linen','olive','boucle','rug')else 1.6;uv=(world[0]/tile,world[2]/tile)if ay>=ax and ay>=az else(world[2]/tile,world[1]/tile)if ax>=az else(world[0]/tile,world[1]/tile)
    code=tuple(round(c,5)for c in pos)+tuple(round(c,3)for c in normal)+tuple(round(c,4)for c in uv)
    if code not in bucket['lookup']:
     bucket['lookup'][code]=len(bucket['positions'])//3;bucket['positions'].extend(pos);bucket['normals'].extend(normal);bucket['uv'].extend(uv)
    ids.append(bucket['lookup'][code])
   bucket['indices'].extend(ids[i]for i in inds);triangles+=nt;call('SUMeshHelperRelease',C.byref(mesh))
  for child in refs('SUEntitiesGetGroups',ent):
-  t=Transform();call('SUGroupGetTransform',child,C.byref(t));paint=ref('SUDrawingElementGetMaterial',api.SUGroupToDrawingElement(child));collect(ref('SUGroupGetEntities',child),mul(matrix,list(t.values)),paint if paint.ptr else inherited,item)
+  t=Transform();call('SUGroupGetTransform',child,C.byref(t));paint=ref('SUDrawingElementGetMaterial',api.SUGroupToDrawingElement(child));label=string('SUGroupGetName',child);partIndex=int(label.rsplit(' ',1)[-1])-1 if label.rsplit(' ',1)[-1].isdigit()else -1;childPart=item['parts'][partIndex]if 0<=partIndex<len(item['parts'])else part;collect(ref('SUGroupGetEntities',child),mul(matrix,list(t.values)),paint if paint.ptr else inherited,item,childPart)
 for group in refs('SUEntitiesGetGroups',root):
  name=string('SUGroupGetName',group)
  if not name.startswith('MT | '):continue
@@ -69,7 +78,7 @@ nodes={}
 for (ident,mat),b in buckets.items():
  item=b['item']
  if ident not in nodes:
-  index=len(g['nodes']);nodes[ident]=index;g['scenes'][0]['nodes'].append(index);g['meshes'].append({'name':ident,'primitives':[]});g['nodes'].append({'name':item['name']if item['movable']else item['room']+' | fitted finishes','mesh':len(g['meshes'])-1,'translation':item['pivot']if item['movable']else[0,0,0],'extras':{'itemId':ident,'room':item['room'],'name':item['name'],'movable':item['movable']}})
+  index=len(g['nodes']);nodes[ident]=index;g['scenes'][0]['nodes'].append(index);g['meshes'].append({'name':ident,'primitives':[]});g['nodes'].append({'name':item['name']if item['movable']else item['room']+' | fitted finishes','mesh':len(g['meshes'])-1,'translation':item['pivot']if item['movable']else[0,0,0],'extras':{'itemId':ident,'room':item['room'],'name':item['name'],'movable':item['movable'],**({'facadeDoor':item['facadeDoor']}if item.get('facadeDoor')else{})}})
  prim={'attributes':{'POSITION':attr(b['positions'],'VEC3'),'NORMAL':attr(b['normals'],'VEC3'),'TEXCOORD_0':attr(b['uv'],'VEC2')},'indices':attr(b['indices'],'SCALAR',5123 if len(b['positions'])//3<65536 else 5125),'material':matids[mat]};g['meshes'][g['nodes'][nodes[ident]]['mesh']]['primitives'].append(prim)
 g['buffers']=[{'byteLength':len(blob)}];js=json.dumps(g,separators=(',',':')).encode();js+=b' '*((-len(js))%4);blob+=b'\0'*((-len(blob))%4);args.output.parent.mkdir(parents=True,exist_ok=True)
 args.output.write_bytes(struct.pack('<III',0x46546c67,2,28+len(js)+len(blob))+struct.pack('<II',len(js),0x4e4f534a)+js+struct.pack('<II',len(blob),0x004e4942)+blob)

@@ -43,7 +43,7 @@ matrefs={}
 for name,props in design['materials'].items():
  mat=ref('SUMaterialCreate');call('SUMaterialSetName',mat,('MT | '+name).encode());col=rgb(props['color']);call('SUMaterialSetColor',mat,C.byref(col));
  if props.get('texture'):
-  tex=Ref();path=texture_png(name,props);photo=Path(__file__).resolve().parents[1]/'dist/assets/realism/teak-color.jpg';tinted=Path(__file__).resolve().parents[1]/f'dist/assets/surfaces/native/{design["scheme"]}-{name}.jpg';path=tinted if tinted.exists() else photo if name in('teak','teakDark') and photo.exists() else path;tile=.4 if props['texture'] in('wood','stone')else .12;call('SUTextureCreateFromFile',C.byref(tex),str(path.resolve()).encode(),C.c_double(tile/.0254),C.c_double(tile/.0254));call('SUMaterialSetTexture',mat,tex)
+  tex=Ref();path=texture_png(name,props);photo=Path(__file__).resolve().parents[1]/'dist/assets/realism/teak-color.jpg';tinted=Path(__file__).resolve().parents[1]/f'dist/assets/surfaces/native/{design["scheme"]}-{name}.jpg';finish={'teak':'wood','teakDark':'wood','linen':'linen','olive':'linen','boucle':'boucle','cane':'cane','stone':'concrete' if design['scheme']=='chalk' else 'stone','limewash':'wall','rug':'linen'}.get(name);catalogue=Path(__file__).resolve().parents[1]/f"dist/assets/catalogue/{design['scheme']}/{finish}-color.jpg";path=catalogue if catalogue.exists() else tinted if tinted.exists() else photo if name in('teak','teakDark') and photo.exists() else path;tile=.4 if props['texture'] in('wood','stone')else .12;call('SUTextureCreateFromFile',C.byref(tex),str(path.resolve()).encode(),C.c_double(tile/.0254),C.c_double(tile/.0254));call('SUMaterialSetTexture',mat,tex)
  call('SUModelAddMaterials',model,C.c_size_t(1),(Ref*1)(mat));
  if props.get('opacity'):
   call('SUMaterialSetOpacity',mat,C.c_double(props['opacity']));call('SUMaterialSetUseOpacity',mat,C.c_bool(True))
@@ -75,7 +75,11 @@ def rotate(v,angles):
  return x,y,z
 def shape(part):
  kind=part['shape'];s=part.get('s');verts=[];faces=[];smooth=kind not in('box','archPanel')
- if kind in('vessel','shade','lathe'):
+ if kind=='polygonPanel':
+  outline=part['outline'];n=len(outline);verts=[(x,y,z)for z in[-s[2]/2,s[2]/2]for x,y in outline];faces=[[0,j+1,j]for j in range(1,n-1)]+[[n,n+j,n+j+1]for j in range(1,n-1)]+[[j,(j+1)%n,(j+1)%n+n,j+n]for j in range(n)]
+ elif kind=='assetMesh':
+  asset=json.loads((Path(__file__).resolve().parents[1]/'dist/assets/furniture'/f"{part['asset']}.json").read_text());piece=asset['pieces'][part['piece']];verts=piece['vertices'];faces=piece['faces']
+ elif kind in('vessel','shade','lathe'):
   seg=32
   if kind=='lathe':
    profile=part['profile']
@@ -193,8 +197,8 @@ def shape(part):
   for i in range(seg):j=(i+1)%seg;faces.append([i,j,j+seg,i+seg])
  else:raise ValueError(kind)
  if kind not in('rod','tube'):
-  verts=[tuple(rotate(v,part.get('rotation',[0,0,0]))[i]+part['p'][i]for i in range(3))for v in verts]
- if kind not in('leaf','cloth','vessel','shade','lathe','tube','torus'):
+  verts=[tuple((sum(part['basis'][k][i]*v[k]for k in range(3))if part.get('basis')else rotate(v,part.get('rotation',[0,0,0]))[i])+part['p'][i]for i in range(3))for v in verts]
+ if kind not in('assetMesh','leaf','cloth','vessel','shade','lathe','tube','torus'):
   center=part.get('p',[(part['a'][i]+part['b'][i])/2 for i in range(3)] if kind=='rod' else [0,0,0])
   for f in faces:
    a,b,c=[verts[i]for i in f[:3]];u=[b[k]-a[k]for k in range(3)];v=[c[k]-a[k]for k in range(3)];normal=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];mid=[sum(verts[i][k]for i in f)/len(f)-center[k]for k in range(3)]

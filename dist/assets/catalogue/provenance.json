@@ -1,0 +1,326 @@
+{
+  "referenceSystem": "Shelter of Sky / catalogue-materials.js and extract-catalogue-schemes.py",
+  "sourcePDF": "To Breathe_FG Signature Catalogue.pdf",
+  "sourceSHA256": "6af9efd092b8edddce67939825e7c5d14a3efab8202842602748bdc0db789272",
+  "schemes": {
+    "earth": {
+      "page": 19,
+      "maps": {
+        "wall": {
+          "embeddedImage": "X18.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "stone": {
+          "embeddedImage": "X21.png",
+          "originalPixels": [
+            308,
+            379
+          ],
+          "crop": [
+            43,
+            45,
+            264,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "wood": {
+          "embeddedImage": "X23.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "linen": {
+          "embeddedImage": "X25.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "boucle": {
+          "embeddedImage": "X28.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "quartz": {
+          "embeddedImage": "X30.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        }
+      }
+    },
+    "chalk": {
+      "page": 20,
+      "maps": {
+        "wall": {
+          "embeddedImage": "X18.png",
+          "originalPixels": [
+            216,
+            379
+          ],
+          "crop": [
+            30,
+            45,
+            185,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "concrete": {
+          "embeddedImage": "X20.png",
+          "originalPixels": [
+            246,
+            379
+          ],
+          "crop": [
+            34,
+            45,
+            211,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "stone": {
+          "embeddedImage": "X22.png",
+          "originalPixels": [
+            246,
+            379
+          ],
+          "crop": [
+            34,
+            45,
+            211,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "wood": {
+          "embeddedImage": "X24.png",
+          "originalPixels": [
+            246,
+            379
+          ],
+          "crop": [
+            34,
+            45,
+            211,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "linen": {
+          "embeddedImage": "X26.png",
+          "originalPixels": [
+            216,
+            379
+          ],
+          "crop": [
+            30,
+            45,
+            185,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "boucle": {
+          "embeddedImage": "X28.png",
+          "originalPixels": [
+            246,
+            379
+          ],
+          "crop": [
+            34,
+            45,
+            211,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "quartz": {
+          "embeddedImage": "X30.png",
+          "originalPixels": [
+            246,
+            379
+          ],
+          "crop": [
+            34,
+            45,
+            211,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        }
+      }
+    },
+    "canopy": {
+      "page": 21,
+      "maps": {
+        "wall": {
+          "embeddedImage": "X18.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "stone": {
+          "embeddedImage": "X20.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "wood": {
+          "embeddedImage": "X22.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "cane": {
+          "embeddedImage": "X24.png",
+          "originalPixels": [
+            247,
+            379
+          ],
+          "crop": [
+            34,
+            45,
+            212,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "linen": {
+          "embeddedImage": "X26.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        },
+        "quartz": {
+          "embeddedImage": "X28.png",
+          "originalPixels": [
+            277,
+            379
+          ],
+          "crop": [
+            38,
+            45,
+            238,
+            333
+          ],
+          "diffuse": "Original embedded catalogue swatch, border crop only",
+          "normal": "Reference-derived surface approximation",
+          "roughness": "Conservative matte/honed material response"
+        }
+      }
+    }
+  }
+}

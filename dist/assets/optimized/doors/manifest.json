@@ -1,0 +1,61 @@
+{
+  "source": "Original villa.gltf door leaves, handles and hinges",
+  "doors": [
+    {
+      "id": "main-bath",
+      "name": "Main bathroom",
+      "node": 171,
+      "hinge": [
+        -38.64243,
+        0,
+        -2.9887
+      ],
+      "closedDirection": -1,
+      "sourceAngle": -1.2090720385860865,
+      "sourcePositionPreserved": true,
+      "bounds": {
+        "min": [
+          -38.66925405765619,
+          -5.779844158837477e-9,
+          -3.3355050086975098
+        ],
+        "max": [
+          -37.86720300411139,
+          2.0202019214630127,
+          -2.964659244151494
+        ]
+      },
+      "hingeDerivation": "Centres of the retained upper and lower source hinge components",
+      "url": "./assets/optimized/doors/main-bath.glb",
+      "bytes": 431392
+    },
+    {
+      "id": "guest-bath",
+      "name": "Guest bathroom",
+      "node": 365,
+      "hinge": [
+        -45.21794,
+        0,
+        -7.07015
+      ],
+      "closedDirection": 1,
+      "sourceAngle": -1.2425831362863131,
+      "sourcePositionPreserved": true,
+      "bounds": {
+        "min": [
+          -45.99318583927401,
+          -5.722044615907862e-9,
+          -7.091792316764981
+        ],
+        "max": [
+          -45.191098370931066,
+          2,
+          -6.758037216885211
+        ]
+      },
+      "hingeDerivation": "Centres of the retained upper and lower source hinge components",
+      "url": "./assets/optimized/doors/guest-bath.glb",
+      "bytes": 430860
+    }
+  ]
+}

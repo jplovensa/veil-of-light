@@ -165,56 +165,7 @@ export const exteriorPalettes=[
   "exteriorImage": "assets/exterior/chalk-exterior.jpg"
  }
 ];
-export const ambiancePresets={
- "day": {
-  "name": "Daylight",
-  "sky": "#dce5e5",
-  "fog": "#dce0d2",
-  "sun": "#ffe6c2",
-  "power": 3.6,
-  "position": [
-   -25,
-   8,
-   -14
-  ],
-  "hemi": 0.45,
-  "environment": 0.7,
-  "exposure": 1.12,
-  "lamps": 0.12
- },
- "sunset": {
-  "name": "Golden hour",
-  "sky": "#dfc9af",
-  "fog": "#d9c3a5",
-  "sun": "#ffc18a",
-  "power": 2.6,
-  "position": [
-   -25,
-   4,
-   -19
-  ],
-  "hemi": 0.4,
-  "environment": 0.48,
-  "exposure": 1.12,
-  "lamps": 0.65
- },
- "night": {
-  "name": "Blue hour",
-  "sky": "#17293c",
-  "fog": "#233441",
-  "sun": "#9ebadc",
-  "power": 0.18,
-  "position": [
-   -24,
-   12,
-   -15
-  ],
-  "hemi": 0.16,
-  "environment": 0.12,
-  "exposure": 1.35,
-  "lamps": 1.3
- }
-};
+export const ambiancePresets={day:{name:'Daylight',sky:'#dce2d7',fog:'#dce2d7',sun:'#fff0d2',power:2.5,position:[-50.7,18,6.7],hemi:.65,environment:.75,exposure:1.05,lamps:.16},sunset:{name:'Golden hour',sky:'#d9c2a3',fog:'#d9c2a3',sun:'#ffc78d',power:2.8,position:[-57.7,7,6.7],hemi:.4,environment:.4,exposure:1.05,lamps:.65},night:{name:'Dusk',sky:'#263d49',fog:'#263d49',sun:'#b1c8e0',power:.22,position:[-50.7,18,6.7],hemi:.25,environment:.18,exposure:1.2,lamps:1.15}};
 export const interiorPalettes={
  "earth": {
   "name": "Mediterranean",

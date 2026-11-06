@@ -22,8 +22,8 @@ for(const scheme of ['earth','chalk','canopy']){
   bounds.set(e.itemId,box);checked.push({id:e.itemId,room:e.room,bounds:box,floorLevel:level});
  }
  const desk=bounds.get('study-desk')||bounds.get('fixed-Loft study'),chair=bounds.get('study-chair'),bench=bounds.get('loft-bench'),bed=bounds.get('loft-bed');assert.ok(desk&&chair&&bench&&bed);
- const chairToBench=bench.min[0]-chair.max[0],benchToBed=bed.min[0]-bench.max[0];assert.ok(chairToBench>.7,'Retain a usable aisle between the work chair and bench');assert.ok(benchToBed>.9,'Retain the aisle at the bed foot');
+ const chairToBench=bench.min[0]-chair.max[0],benchToBed=bed.min[0]-bench.max[0];assert.ok(chairToBench>.7,'Retain a usable aisle between the work chair and bench');assert.ok(benchToBed>.2&&benchToBed<.4,'Keep the bench close to the foot of the bed without touching it');
  report.schemes[scheme]={checked,chairToBenchMetres:chairToBench,benchToBedMetres:benchToBed,deskIndoors:true};
- console.log(`${scheme}: ${checked.length} upstairs pieces supported by source floors; desk indoors; aisles ${chairToBench.toFixed(2)} m and ${benchToBed.toFixed(2)} m.`);
+ console.log(`${scheme}: ${checked.length} upstairs pieces supported by source floors; desk indoors; study aisle ${chairToBench.toFixed(2)} m; bench-to-bed gap ${benchToBed.toFixed(2)} m.`);
 }
 if(process.argv[2])writeFileSync(process.argv[2],JSON.stringify(report,null,2));

@@ -1,7 +1,7 @@
 {
   "shell": {
     "url": "./assets/optimized/villa-shell.glb",
-    "bytes": 7541812,
+    "bytes": 3306176,
     "sourceRetainedNodes": [
       1,
       153,
@@ -21,6 +21,68 @@
       1262,
       1272,
       1274
+    ],
+    "animatedSourceNodeIds": [
+      171,
+      365
+    ],
+    "doors": [
+      {
+        "id": "main-bath",
+        "name": "Main bathroom",
+        "node": 171,
+        "hinge": [
+          -38.64243,
+          0,
+          -2.9887
+        ],
+        "closedDirection": -1,
+        "sourceAngle": -1.2090720385860865,
+        "sourcePositionPreserved": true,
+        "bounds": {
+          "min": [
+            -38.66925405765619,
+            -5.779844158837477e-9,
+            -3.3355050086975098
+          ],
+          "max": [
+            -37.86720300411139,
+            2.0202019214630127,
+            -2.964659244151494
+          ]
+        },
+        "hingeDerivation": "Centres of the retained upper and lower source hinge components",
+        "url": "./assets/optimized/doors/main-bath.glb",
+        "bytes": 431392
+      },
+      {
+        "id": "guest-bath",
+        "name": "Guest bathroom",
+        "node": 365,
+        "hinge": [
+          -45.21794,
+          0,
+          -7.07015
+        ],
+        "closedDirection": 1,
+        "sourceAngle": -1.2425831362863131,
+        "sourcePositionPreserved": true,
+        "bounds": {
+          "min": [
+            -45.99318583927401,
+            -5.722044615907862e-9,
+            -7.091792316764981
+          ],
+          "max": [
+            -45.191098370931066,
+            2,
+            -6.758037216885211
+          ]
+        },
+        "hingeDerivation": "Centres of the retained upper and lower source hinge components",
+        "url": "./assets/optimized/doors/guest-bath.glb",
+        "bytes": 430860
+      }
     ],
     "removedOldFurnitureNodes": [
       2,
@@ -45,14 +107,14 @@
     },
     "boundsAfter": {
       "min": [
-        -47.45012898425679,
-        -0.2001064572409812,
-        -11.10002433040431
+        -47.45000027467929,
+        -0.1999910498388957,
+        -11.09999998779297
       ],
       "max": [
         -36.549999997732264,
         7.686179375469131,
-        0.7401025456564607
+        0.7400000175456096
       ]
     }
   },
@@ -60,43 +122,46 @@
     "earth": {
       "scheme": "earth",
       "nativeFile": "Veil of Light - Mediterranean.skp",
-      "nativeSHA256": "c23017b943ef693f10bd9a390c10e4196d987d86043adf2fa230f468513be53b",
+      "nativeSHA256": "cc6221085a784400633db52449f5ac0724bb33c500a289bdf6a287958fe872a2",
       "nativeVerified": true,
-      "furnitureGroups": 54,
-      "renderGroups": 39,
-      "triangles": 230236,
-      "bytes": 1710020,
+      "furnitureGroups": 60,
+      "renderGroups": 59,
+      "triangles": 252944,
+      "bytes": 3226756,
       "materials": 20,
-      "renderTriangles": 168406,
-      "furnitureRevision": "proposal-furniture-7",
+      "renderTriangles": 202424,
+      "furnitureRevision": "sky-system-8",
+      "shading": "45-degree creased normals, then welded and compressed",
       "url": "./assets/optimized/earth.glb"
     },
     "chalk": {
       "scheme": "chalk",
       "nativeFile": "Veil of Light - Concrete Industrial.skp",
-      "nativeSHA256": "2212e9b93109eaaaddab3ef8bc64afe1df9b9b561bd34e402dce2e470d39bcc4",
+      "nativeSHA256": "5142f143c9ce9e5a010b31825f7db92fe0f773a7301ceba4fcdec7d64003c378",
       "nativeVerified": true,
-      "furnitureGroups": 53,
-      "renderGroups": 37,
-      "triangles": 208560,
-      "bytes": 1568356,
+      "furnitureGroups": 59,
+      "renderGroups": 58,
+      "triangles": 231264,
+      "bytes": 3076576,
       "materials": 20,
-      "renderTriangles": 151118,
-      "furnitureRevision": "proposal-furniture-7",
+      "renderTriangles": 184798,
+      "furnitureRevision": "sky-system-8",
+      "shading": "45-degree creased normals, then welded and compressed",
       "url": "./assets/optimized/chalk.glb"
     },
     "canopy": {
       "scheme": "canopy",
       "nativeFile": "Veil of Light - Modern Tropical.skp",
-      "nativeSHA256": "f29ada0dfd8ff9a67e8a00ccd30b85c131a7ab589373b69ae09d2f68afb3d2fc",
+      "nativeSHA256": "7a281a7651ca63eb51fba861b32b14fee0770baf20e5d1c36c5f0ba5f468d861",
       "nativeVerified": true,
-      "furnitureGroups": 56,
-      "renderGroups": 39,
-      "triangles": 243856,
-      "bytes": 1734108,
+      "furnitureGroups": 62,
+      "renderGroups": 61,
+      "triangles": 266560,
+      "bytes": 3220868,
       "materials": 20,
-      "renderTriangles": 174826,
-      "furnitureRevision": "proposal-furniture-7",
+      "renderTriangles": 209098,
+      "furnitureRevision": "sky-system-8",
+      "shading": "45-degree creased normals, then welded and compressed",
       "url": "./assets/optimized/canopy.glb"
     }
   }
