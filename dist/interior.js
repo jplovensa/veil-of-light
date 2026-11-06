@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {buildInteriorDesign} from './interior-design.js';
+import {buildInteriorDesign} from './interior-design.js?v=realism-3';
 
 function generatedSurface(kind){
  const n=512,canvas=document.createElement('canvas');canvas.width=canvas.height=n;const ctx=canvas.getContext('2d'),data=ctx.createImageData(n,n);let seed=1827;
