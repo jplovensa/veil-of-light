@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/OrbitControls.js';
 import {RGBELoader} from './vendor/loaders/RGBELoader.js';
 import {GLTFLoader} from 'three/addons/GLTFLoader.js';
-import {loadNativeInterior,prepareShell,styleShell,addGarden} from './interior.js?v=native-5';
+import {loadNativeInterior,prepareShell,styleShell,addGarden} from './interior.js?v=native-6';
 import {MeshoptDecoder} from './vendor/meshopt_decoder.mjs';
 import {installExterior,addPracticalLighting} from './exterior.js?v=native-5';
 import {exteriorPalettes,ambiancePresets} from './exterior-palettes.js?v=native-5';
