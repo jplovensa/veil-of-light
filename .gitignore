@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 *.skp
 .openai/
+
+interior-spec.json
+dist/debug-*
