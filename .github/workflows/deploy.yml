@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 concurrency:
@@ -18,29 +18,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
-      - name: Apply reviewed catalogue update
-        if: hashFiles('catalogue-update.zip') != ''
-        run: |
-          unzip -oq catalogue-update.zip
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist tools docs README.md
-          git rm catalogue-update.zip
-          git commit -m "Apply original catalogue schemes, ambiance, furniture editing and transparent logo"
-          git push
       - name: Check viewer JavaScript
         run: |
           node --check dist/app.js
           node --check dist/interior.js
           node --check dist/interior-design.js
           node --check dist/render-quality.js
-          if [ -f dist/exterior.js ]; then
-            node --check dist/exterior.js
-            node --check dist/exterior-palettes.js
-            node --check dist/furniture-editor.js
-            node tools/validate-experience.mjs
-          fi
+          node --check dist/exterior.js
+          node --check dist/exterior-palettes.js
+          node --check dist/furniture-editor.js
           node tools/validate-interior.mjs
+          node tools/validate-experience.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
