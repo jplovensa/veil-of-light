@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 concurrency:
@@ -18,27 +18,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
-      - name: Install reviewed furniture refinement
-        if: ${{ hashFiles('veil-furniture-refinement.zip') != '' }}
-        run: |
-          python3 - <<'PY'
-          import hashlib,zipfile
-          from pathlib import Path,PurePosixPath
-          name='veil-furniture-refinement.zip'
-          assert hashlib.sha256(Path(name).read_bytes()).hexdigest()=='5987659d1f91f81096d1def514020877d386174eb1f1c863f7dfe9e9dbec538a'
-          with zipfile.ZipFile(name) as archive:
-              for item in archive.infolist():
-                  p=PurePosixPath(item.filename)
-                  assert not p.is_absolute() and '..' not in p.parts
-                  assert p.parts[0] in ['dist','tools','docs','README.md']
-              archive.extractall('.')
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist tools docs README.md
-          git rm veil-furniture-refinement.zip
-          git commit -m "Refine proposal furniture and relocate study inside the loft"
-          git push
       - name: Check viewer JavaScript
         run: |
           node --check dist/startup.js
