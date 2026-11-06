@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/GLTFLoader.js';
-import {buildModernTropicalInterior,addGarden} from './interior.js';
+import {buildModernTropicalInterior,addGarden} from './interior.js?v=realism-3';
 import {RGBELoader} from './vendor/loaders/RGBELoader.js';
 import {EffectComposer} from './vendor/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/postprocessing/RenderPass.js';
