@@ -7,7 +7,7 @@ Interactive Three.js architectural explorer converted from the supplied `villa 2
 Run from this directory with `python3 -m http.server 8765 --directory dist`, then open http://localhost:8765.
 
 - Orbit: drag, zoom, pan; double-click a surface to focus.
-- Floor plan: top-down orthographic view with adjustable horizontal cutaway. Double-click a visible floor to start walking there.
+- Floor plan: top-down orthographic view with adjustable horizontal cutaway and wall-section outlines. Double-click a visible floor to start walking there.
 - Walk through: starts at the original SketchUp camera. Click to activate, mouse look (or drag where pointer lock is unavailable), WASD / arrows to move, Shift to accelerate, Q / E to change elevation, Esc to pause.
 - Textures, grid, snapshots, and fullscreen controls.
 
