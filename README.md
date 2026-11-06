@@ -4,7 +4,7 @@
 
 A Three.js walkthrough of the supplied villa SketchUp model, furnished in a modern tropical palette: warm limewash, teak, woven cane, linen, travertine, olive accents, and tropical planting.
 
-The full interior covers living, dining, kitchen, guest bedroom, guest bathroom, main bathroom, loft bedroom, loft study, entry, and rear terrace. Existing beds, sanitary fittings, appliances, arches, glazing, and the spiral stair are retained. The lounge seating and bathroom doors are redesigned; detached source-model objects are hidden. All four dining chairs face the table centre.
+The full interior covers living, dining, kitchen, guest bedroom, guest bathroom, main bathroom, loft bedroom, loft study, entry, and rear terrace. Existing beds, sanitary fittings, appliances, arches, glazing, and the spiral stair are retained. The lounge seating is redesigned; original bathroom doors, door hardware and kitchen joinery are retained at their source transforms. Detached source-model objects are hidden. All four dining chairs face the table centre.
 
 ## Explore
 
@@ -18,7 +18,11 @@ Desktop keyboard and mouse are recommended. Collision uses a forward ray test. E
 
 Run `python3 -m http.server 8765 --directory dist` and open http://localhost:8765.
 
-All libraries, fonts, model assets, and the moodboard are bundled locally. The original geometry is in `dist/assets/villa.gltf`; `dist/interior-design.js` defines the shared furnishing geometry and placement. `dist/interior.js` renders those same design parts with procedural material textures and merged room geometry.
+All libraries, fonts, model assets, and the moodboard are bundled locally. The original geometry is in `dist/assets/villa.gltf`; `dist/interior-design.js` defines the shared furnishing geometry and placement. `dist/interior.js` renders those same design parts with photographed PBR materials, soft upholstery geometry, woven chair backs, shaped ceramics, and merged room geometry.
+
+## Material and lighting refinement
+
+Teak, ivory linen and limewash use bundled diffuse, normal and roughness maps. HDR environment lighting, warm directional daylight, contact shadows and edge smoothing give the furniture a more grounded appearance. The shared design includes sculpted teak/cane chairs, rounded seat cushions, curved foliage and hollow lathed ceramics. The live viewer remains a real-time Three.js scene.
 
 ## Editable SketchUp output
 
@@ -42,5 +46,7 @@ The older `convert_skp.py` / `package_model.py` tools regenerate the original sh
 ## Moodboard and credits
 
 The moodboard is an AI-generated atmosphere and material reference, created with the built-in image-generation tool. It is not an exact render of the villa. Its production prompt is in `docs/moodboard-prompt.txt`.
+
+The bundled teak veneer, rough linen, plastered wall and Kiara Interior HDR environment are CC0 assets from [Poly Haven](https://polyhaven.com/). Exact source URLs and authors are recorded in `dist/assets/realism/credits.json`. Run `python3 tools/fetch-realism-assets.py` to retrieve the source maps and rendering addons.
 
 Three.js is distributed under the MIT License and Inter under the SIL Open Font License; their notices are in `dist/vendor/`. The Fjäll Group logo, villa design, and source model retain their respective owners' rights. No additional reuse licence is granted for the villa or branding by this repository.

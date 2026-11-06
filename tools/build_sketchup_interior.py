@@ -42,7 +42,7 @@ matrefs={}
 for name,props in design['materials'].items():
  mat=ref('SUMaterialCreate');call('SUMaterialSetName',mat,('MT | '+name).encode());col=rgb(props['color']);call('SUMaterialSetColor',mat,C.byref(col));
  if props.get('texture'):
-  tex=Ref();path=texture_png(name,props);tile=.4 if props['texture'] in('wood','stone')else .12;call('SUTextureCreateFromFile',C.byref(tex),str(path.resolve()).encode(),C.c_double(tile/.0254),C.c_double(tile/.0254));call('SUMaterialSetTexture',mat,tex)
+  tex=Ref();path=texture_png(name,props);photo=Path(__file__).resolve().parents[1]/'dist/assets/realism/teak-color.jpg';path=photo if name in('teak','teakDark') and photo.exists() else path;tile=.4 if props['texture'] in('wood','stone')else .12;call('SUTextureCreateFromFile',C.byref(tex),str(path.resolve()).encode(),C.c_double(tile/.0254),C.c_double(tile/.0254));call('SUMaterialSetTexture',mat,tex)
  call('SUModelAddMaterials',model,C.c_size_t(1),(Ref*1)(mat));
  if props.get('opacity'):
   call('SUMaterialSetOpacity',mat,C.c_double(props['opacity']));call('SUMaterialSetUseOpacity',mat,C.c_bool(True))
@@ -71,7 +71,29 @@ def rotate(v,angles):
  return x,y,z
 def shape(part):
  kind=part['shape'];s=part.get('s');verts=[];faces=[];smooth=kind!='box'
- if kind=='leaf':
+ if kind in('vessel','shade'):
+  seg=48
+  if kind=='shade':profile=[(s[0]*math.sin((i+.3)/16.3*math.pi/2),s[1]*math.cos((i+.3)/16.3*math.pi/2))for i in range(17)]
+  else:
+   outline=[(.48,0),(.7,.04),(.88,.2),(.99,.62),(1,.95),(s[2]/s[0],1),(s[2]/s[0]-.065,1),(.9,.93),(.88,.6),(.75,.22),(.38,.09),(0,.09)] if s[2]/s[0]>.7 else [(0,0),(.5,0),(.7,.04),(.97,.25),(1,.48),(.86,.64),(.48,.79),(.4,.97),(.4,1),(.31,1),(.31,.96),(.4,.8),(.73,.61),(.85,.45),(.73,.22),(.35,.09),(0,.09)]
+   profile=[(r*s[0],(y-.5)*s[1])for r,y in outline]
+  for r,y in profile:
+   for i in range(seg):angle=i*2*math.pi/seg;verts.append((r*math.cos(angle),y,r*math.sin(angle)))
+  for j in range(len(profile)-1):
+   for i in range(seg):a=j*seg+i;b=(j+1)*seg+i;c=(j+1)*seg+(i+1)%seg;d=j*seg+(i+1)%seg;faces.append([a,b,c,d])
+  unique=[];mapping={};remap=[]
+  for v in verts:
+   key=tuple(round(c,8)for c in v)
+   if key not in mapping:mapping[key]=len(unique);unique.append(v)
+   remap.append(mapping[key])
+  filtered=[]
+  for f in faces:
+   seq=[]
+   for index in f:
+    if remap[index] not in seq:seq.append(remap[index])
+   if len(seq)>2:filtered.append(seq)
+  verts=unique;faces=filtered
+ elif kind=='leaf':
   for j in range(11):
    t=j/10;w=math.sin(math.pi*t)**.8*s[0]/2
    for k in[-1,0,1]:verts.append((k*w,(t-.5)*s[1],(1-abs(k))*.3*math.sin(math.pi*t)*s[2]))
@@ -124,7 +146,7 @@ def shape(part):
  else:raise ValueError(kind)
  if kind!='rod':
   verts=[tuple(rotate(v,part.get('rotation',[0,0,0]))[i]+part['p'][i]for i in range(3))for v in verts]
- if kind!='leaf':
+ if kind not in('leaf','vessel','shade'):
   center=part.get('p',[(part['a'][i]+part['b'][i])/2 for i in range(3)] if kind=='rod' else [0,0,0])
   for f in faces:
    a,b,c=[verts[i]for i in f[:3]];u=[b[k]-a[k]for k in range(3)];v=[c[k]-a[k]for k in range(3)];normal=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];mid=[sum(verts[i][k]for i in f)/len(f)-center[k]for k in range(3)]
