@@ -19,7 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Check viewer JavaScript
-        run: node --check dist/app.js
+        run: |
+          node --check dist/app.js
+          node --check dist/interior.js
+          node --check dist/interior-design.js
+          node tools/validate-interior.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
