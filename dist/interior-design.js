@@ -51,7 +51,7 @@ export function buildInteriorDesign(){
  begin('Kitchen','Travertine backsplash');box([-37.065,1.22,-1.85],[.035,.55,1.65],'stone');
  plant('Kitchen',[-38.5,0,-.55],1.3);
  // Guest suite — detailed source bed retained, with a teak/cane headboard and coordinated accessories.
- begin('Guest bedroom','Cane headboard');box([-47.14,1.12,-3.17],[.07,1.7,2.65],'teak');box([-47.095,1.16,-3.17],[.02,1.47,2.44],'cane');panelSlats([-47.065,1.16,-3.17],2.5,1.5,'z',.11);
+ begin('Guest bedroom','Cane headboard');box([-47.14,1.12,-3.17],[.07,1.7,2.65],'teak');box([-47.095,1.16,-3.17],[.02,1.47,2.44],'cane');panelSlats([-47.065,1.46,-3.17],2.5,.86,'z',.11);
  bedside('Guest bedroom',[-46.72,0,-4.34]);bedside('Guest bedroom',[-46.72,0,-1.98]);
  begin('Guest bedroom','Soft linen window panels');for(const x of[-46.94,-43.58])for(let i=0;i<7;i++)box([x+(i-3)*.035,1.42,-1.54+Math.sin(i*1.7)*.035],[.039,2.7,.045],'linen');
  cabinet('Guest bedroom',[-43.59,.48,-2.48],[1.25,.9,.42],2,-Math.PI/2);artwork('Guest bedroom',[-43.29,1.64,-2.55],.9,.82,-Math.PI/2);
@@ -70,7 +70,7 @@ export function buildInteriorDesign(){
  }
  begin('Main bathroom','Teak vanity front');box([-37.57,.57,-3.34],[.035,.43,.8],'teak');box([-37.595,.57,-3.34],[.015,.34,.67],'cane');rod([-37.62,.7,-3.48],[-37.62,.7,-3.2],.009,'brass');
  // Loft suite — the floor is 2.95 m above ground; the stair void remains open.
- begin('Loft bedroom','Teak and cane bedhead');box([-37.11,3.78,-4.88],[.06,1.45,2.55],'teak');box([-37.155,3.82,-4.88],[.02,1.24,2.35],'cane');panelSlats([-37.18,3.82,-4.88],2.42,1.28,'z',.11);
+ begin('Loft bedroom','Teak and cane bedhead');box([-37.11,3.78,-4.88],[.06,1.45,2.55],'teak');box([-37.155,3.82,-4.88],[.02,1.24,2.35],'cane');panelSlats([-37.18,4.18,-4.88],2.42,.56,'z',.11);
  bedside('Loft bedroom',[-37.62,2.95,-6.2]);bedside('Loft bedroom',[-37.62,2.95,-3.48]);
  begin('Loft bedroom','Soft linen gallery curtains');for(const x of[-42.77,-37.33])for(let i=0;i<7;i++)box([x+(i-3)*.035,3.78,-8.79+Math.sin(i*1.7)*.035],[.039,1.7,.045],'linen');
  cabinet('Loft bedroom',[-42.65,3.9,-5.65],[1.7,1.86,.52],3,Math.PI/2);
