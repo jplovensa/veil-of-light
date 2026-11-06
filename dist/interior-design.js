@@ -47,17 +47,14 @@ export function buildInteriorDesign(){
  begin('Dining','Round teak dining table');cyl([-40.3,.36,-3.2],.26,.7,'teak');cyl([-40.3,.75,-3.2],.7,.065,'teak');
  for(const seat of[[-40.3,0,-4.18],[-40.3,0,-2.22],[-41.28,0,-3.2],[-39.32,0,-3.2]]){const angle=Math.atan2(seat[0]-(-40.3),seat[2]-(-3.2));chair('Dining',seat,angle);item.facing={position:seat,rotation:angle,target:[-40.3,0,-3.2]};}
  begin('Dining','Dining ceramics');vase([-40.3,.79,-3.2],.24,'ceramic');cyl([-40.01,.8,-3.18],.12,.025,'clay');pendant('Dining',[-40.3,2.18,-3.2],.38,.3);
- // Kitchen — retained appliances, new tactile surfaces, shelves and a pair of stools.
- begin('Kitchen','Travertine backsplash');box([-37.065,1.22,-1.55],[.035,.55,2.15],'stone');
- begin('Kitchen','Teak wall shelf');box([-37.22,1.64,-1.5],[.3,.055,1.85],'teak');for(let i=0;i<3;i++)cyl([-37.24,1.75,-2.15+i*.26],.065,.18,'ceramic');vase([-37.22,1.67,-.91],.24,'clay');
- begin('Kitchen','Counter styling');box([-37.56,.99,-2.32],[.38,.026,.25],'teak',.1);vase([-37.47,1.0,-.42],.25,'ceramic');
- begin('Kitchen','Warm under-cabinet light');box([-37.3,1.59,-1.55],[.2,.015,1.78],'light');
+ // Kitchen — original cabinetry and appliances retained; finish panel stops before the tall appliance unit.
+ begin('Kitchen','Travertine backsplash');box([-37.065,1.22,-1.85],[.035,.55,1.65],'stone');
  plant('Kitchen',[-38.5,0,-.55],1.3);
  // Guest suite — detailed source bed retained, with a teak/cane headboard and coordinated accessories.
  begin('Guest bedroom','Cane headboard');box([-47.14,1.12,-3.17],[.07,1.7,2.65],'teak');box([-47.095,1.16,-3.17],[.02,1.47,2.44],'cane');panelSlats([-47.065,1.16,-3.17],2.5,1.5,'z',.11);
  bedside('Guest bedroom',[-46.72,0,-4.34]);bedside('Guest bedroom',[-46.72,0,-1.98]);
  begin('Guest bedroom','Soft linen window panels');for(const x of[-46.94,-43.58])for(let i=0;i<7;i++)box([x+(i-3)*.035,1.42,-1.54+Math.sin(i*1.7)*.035],[.039,2.7,.045],'linen');
- cabinet('Guest bedroom',[-43.59,.48,-2.48],[1.25,.9,.42],2,Math.PI/2);artwork('Guest bedroom',[-43.29,1.64,-2.55],.9,.82,-Math.PI/2);
+ cabinet('Guest bedroom',[-43.59,.48,-2.48],[1.25,.9,.42],2,-Math.PI/2);artwork('Guest bedroom',[-43.29,1.64,-2.55],.9,.82,-Math.PI/2);
  begin('Guest bedroom','Guest tray');vase([-43.59,.95,-2.85],.18,'ceramic');plant('Guest bedroom',[-43.72,0,-4.22],1.25);
  // Bathrooms — existing sanitary fittings remain; stone floors, teak screens and accessories finish both rooms.
  for(const [room,x,z,w,d]of[['Guest bathroom',-46.24,-6.12,1.82,2.23],['Main bathroom',-37.89,-3.78,1.58,1.72]]){
