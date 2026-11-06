@@ -14,6 +14,17 @@ Choose a room from **Explore a space**, then click to look around. Use WASD / ar
 
 Desktop keyboard and mouse are recommended. Collision uses a forward ray test. Elevation is manual; this is an architectural explorer with no gravity or automatic stair climbing.
 
+
+## Catalogue design schemes and layout editing
+
+The viewer now applies the supplied **To Breathe - FG Signature Catalogue** boards for Veil of Light: Mediterranean (p. 19), Concrete Industrial (p. 20), and Modern Tropical (p. 21). Original board artwork is included in the Moodboard dialog. Exterior finishes use the catalogue’s warm beige / terracotta sheet (p. 15) or white / charcoal sheet (p. 18). The architectural geometry, door assemblies and built-in kitchen joinery stay at their original source positions. The PDF combines each original moodboard with an applied interior / exterior finish schedule.
+
+Select a **Design scheme** to coordinate exterior stucco, roof, stone, metalwork, interior walls, timber, upholstery, accents and pendant finishes. Switch **Daylight**, **Golden hour**, or **Blue hour**; practical lamps and exterior lighting have their own on/off switch and level control. Lighting is illustrative, without a photometric specification.
+
+Open **Furniture layout** and enable **Move furniture**. Drag a piece in the cutaway plan, or choose it from the list and use 15 cm movement / 15 degree rotation controls. Original beds are included. Undo, reset one piece, reset the whole layout and download a JSON layout are available. Changes save on the current device; they do not overwrite the SketchUp file. Simple room bounds and door / stair exclusion zones help retain access; this does not replace a coordinated clearance review.
+
+`node tools/validate-experience.mjs` verifies the three catalogue schemes, 42 finish entries, lighting presets, bundled boards/PDF and original architectural-export checksum.
+
 ## Local preview
 
 Run `python3 -m http.server 8765 --directory dist` and open http://localhost:8765.

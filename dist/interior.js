@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {buildInteriorDesign} from './interior-design.js?v=realism-3';
+import {interiorPalettes} from './exterior-palettes.js?v=exterior-1';
+import {buildInteriorDesign} from './interior-design.js?v=exterior-1';
 
 function generatedSurface(kind){
  const n=512,canvas=document.createElement('canvas');canvas.width=canvas.height=n;const ctx=canvas.getContext('2d'),data=ctx.createImageData(n,n);let seed=1827;
@@ -62,9 +63,9 @@ function physicalUV(g,kind,s){
  }
 }
 export async function buildModernTropicalInterior(parent,manager){
- const design=buildInteriorDesign(),{palette,maps}=await loadMaterials(design,manager),buckets=new Map(),root=new THREE.Group();root.name='Modern Tropical · crafted interiors';
+ const design=buildInteriorDesign(),{palette,maps}=await loadMaterials(design,manager),buckets=new Map(),movable=[],root=new THREE.Group();root.name='Modern Tropical · crafted interiors';
  const put=(room,mat,g)=>{const key=room+'|'+mat;if(!buckets.has(key))buckets.set(key,[]);buckets.get(key).push(g);};
- for(const item of design.items)for(const p of item.parts){let g;const transform=new THREE.Object3D(),cloth=['linen','olive'].includes(p.m);
+ for(const item of design.items){const moveable=/chair|sofa|coffee table|dining table|side table|lounge bench|low teak bench|reading rug|living rug|Tropical planting/i.test(item.name);const id=String(design.items.indexOf(item));item.moveable=moveable;for(const p of item.parts){let g;const transform=new THREE.Object3D(),cloth=['linen','olive'].includes(p.m);
   if(p.shape==='box')g=Math.min(...p.s)>.025&&!['glass','light'].includes(p.m)?roundedGeometry(p.s,Math.min(.007,Math.min(...p.s)*.16)):new THREE.BoxGeometry(...p.s);
   if(p.shape==='roundedBox')g=roundedGeometry(p.s,Math.min(...p.s)*(cloth?.34:.12),cloth);
   if(p.shape==='leaf')g=leafGeometry(p.s);
@@ -73,9 +74,11 @@ export async function buildModernTropicalInterior(parent,manager){
   if(p.shape==='cylinder'){if(p.s[0]>.12){const b=Math.min(.008,p.s[1]*.14);g=new THREE.LatheGeometry([[0,-p.s[1]/2],[p.s[0]-b,-p.s[1]/2],[p.s[0],-p.s[1]/2+b],[p.s[2],p.s[1]/2-b],[p.s[2]-b,p.s[1]/2],[0,p.s[1]/2]].map(v=>new THREE.Vector2(...v)),64);}else g=new THREE.CylinderGeometry(p.s[2],p.s[0],p.s[1],48);}
   if(p.shape==='rod'){const a=new THREE.Vector3().fromArray(p.a),b=new THREE.Vector3().fromArray(p.b),dir=b.clone().sub(a);g=new THREE.CylinderGeometry(p.r,p.r,dir.length(),p.r<.006?6:16);transform.position.copy(a.add(b).multiplyScalar(.5));transform.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());}
   else{transform.position.fromArray(p.p);transform.rotation.fromArray(p.rotation||[0,0,0]);}
-  transform.updateMatrix();physicalUV(g,p.m,p.s);g.applyMatrix4(transform.matrix);put(item.room,p.shape==='shade'?'shade':p.m,g);
+  transform.updateMatrix();physicalUV(g,p.m,p.s);g.applyMatrix4(transform.matrix);put(id,p.shape==='shade'?'shade':p.m,g);
  }
- for(const[key,geometries]of buckets){const [room,mat]=key.split('|'),g=mergeGeometries(geometries,false),mesh=new THREE.Mesh(g,palette[mat]);mesh.name='MT | '+room+' | '+mat;mesh.userData.room=room;mesh.castShadow=!['light','glass'].includes(mat);mesh.receiveShadow=true;root.add(mesh);for(const x of geometries)x.dispose();}
+ }
+ const itemGroups=new Map();
+ for(const[key,geometries]of buckets){const [id,mat]=key.split('|'),item=design.items[Number(id)],room=item.room,g=mergeGeometries(geometries,false),mesh=new THREE.Mesh(g,palette[mat]);mesh.name='MT | '+room+' | '+mat;mesh.userData.room=room;mesh.castShadow=!['light','glass'].includes(mat);mesh.receiveShadow=true;if(!itemGroups.has(id)){const group=new THREE.Group();group.name=item.name;group.userData={itemId:id,room,name:item.name,movable:item.moveable};itemGroups.set(id,group);root.add(group);}itemGroups.get(id).add(mesh);for(const x of geometries)x.dispose();}
  const original=parent.children[0];if(original)for(const index of design.hideOriginalRootIndices){if(original.children[index+1])original.children[index+1].visible=false;}
  parent.updateMatrixWorld(true);
  parent.traverse(o=>{if(o.isMesh){if(!o.geometry.attributes.normal)o.geometry.computeVertexNormals();let replaced=false;const list=Array.isArray(o.material)?o.material:[o.material],next=list.map(mat=>{
@@ -84,7 +87,12 @@ export async function buildModernTropicalInterior(parent,manager){
   if(['Wood_Floor_Texture_by_AGF81','[Wood Floor]','89_pine light wood fine texture-seamless','CT-5572-T-Natural-Oak','71_dark  fine wood texture-seamless'].includes(name)){replaced=true;const m=palette.teak.clone();m.name=name;return m;}
   if(['mmjhfdghd179','mmjhfdghd189','mmjhfdghd180'].includes(name)){replaced=true;const m=(name==='mmjhfdghd189'?palette.olive:palette.linen).clone();m.name=name;return m;}return mat;});
   o.material=Array.isArray(o.material)?next:next[0];if(replaced){o.geometry=o.geometry.clone();const pos=o.geometry.attributes.position,normal=o.geometry.attributes.normal,uv=o.geometry.attributes.uv,normalMatrix=new THREE.Matrix3().getNormalMatrix(o.matrixWorld);for(let i=0;i<pos.count;i++){const v=new THREE.Vector3().fromBufferAttribute(pos,i).applyMatrix4(o.matrixWorld),n=new THREE.Vector3().fromBufferAttribute(normal,i).applyMatrix3(normalMatrix).normalize();const tile=next[0].map===maps.teak.color?1.2:next[0].map===maps.linen.color?.42:2;if(Math.abs(n.y)>.7)uv.setXY(i,v.x/tile,v.z/tile);else if(Math.abs(n.x)>.7)uv.setXY(i,v.y/tile,v.z/tile);else uv.setXY(i,v.x/tile,v.y/tile);}}}});
- parent.add(root);return {design,root,palette,maps};
+ for(const group of itemGroups.values()){if(!group.userData.movable)continue;const bounds=new THREE.Box3().setFromObject(group),pivot=bounds.getCenter(new THREE.Vector3());pivot.y=0;for(const child of group.children)child.geometry.translate(-pivot.x,0,-pivot.z);group.position.copy(pivot);group.userData.initial={x:pivot.x,z:pivot.z,rotation:0};movable.push(group);}
+ const table=[...itemGroups.values()].find(g=>g.name==='Round teak dining table'),decor=[...itemGroups.values()].find(g=>g.name==='Dining ceramics');if(table&&decor){table.add(decor);decor.position.set(-table.position.x,0,-table.position.z);}
+ parent.add(root);const sourceBeds=[[original?.children[1],'source-guest-bed','Guest bedroom'],[original?.children[5],'source-loft-bed','Loft bedroom']];for(const [bed,id,room]of sourceBeds){if(!bed)continue;const pivot=new THREE.Box3().setFromObject(bed).getCenter(new THREE.Vector3());pivot.y=0;const group=new THREE.Group();group.name='Original SketchUp bed';group.userData={itemId:id,room,name:group.name,movable:true,initial:{x:pivot.x,z:pivot.z,rotation:0}};group.position.copy(pivot);root.add(group);group.attach(bed);movable.push(group);}
+ const paleWoodCanvas=document.createElement('canvas');paleWoodCanvas.width=maps.teak.color.image.width;paleWoodCanvas.height=maps.teak.color.image.height;const pc=paleWoodCanvas.getContext('2d');pc.drawImage(maps.teak.color.image,0,0);const pixels=pc.getImageData(0,0,paleWoodCanvas.width,paleWoodCanvas.height);for(let i=0;i<pixels.data.length;i+=4){const lum=pixels.data[i]*.3+pixels.data[i+1]*.59+pixels.data[i+2]*.11,v=160+lum*.32;pixels.data[i]=v;pixels.data[i+1]=v;pixels.data[i+2]=v;}pc.putImageData(pixels,0,0);const paleWood=new THREE.CanvasTexture(paleWoodCanvas);paleWood.wrapS=paleWood.wrapT=THREE.RepeatWrapping;paleWood.colorSpace=THREE.SRGBColorSpace;paleWood.anisotropy=4;
+ function applyScheme(id){const t=interiorPalettes[id]||interiorPalettes.earth;palette.limewash.color.set(t.wall);palette.teak.color.set(t.wood);palette.teakDark.color.set(id==='chalk'?'#c0a37c':'#a69a86');palette.teak.map=palette.teakDark.map=id==='chalk'?paleWood:maps.teak.color;palette.teak.needsUpdate=palette.teakDark.needsUpdate=true;palette.linen.color.set(t.linen);palette.olive.color.set(t.accent);palette.stone.color.set(t.stone);palette.rug.color.set(t.rug);palette.ceramic.color.set(t.ceramic);palette.cane.color.set(t.cane);palette.shade.color.set(t.industrial?'#313632':t.paper?'#eee7d6':'#9a7a49');palette.shade.alphaTest=t.paper||t.industrial?0:.3;palette.shade.alphaMap=t.paper||t.industrial?null:generatedSurface('shade');palette.shade.needsUpdate=true;parent.traverse(o=>{if(!o.isMesh)return;for(const m of Array.isArray(o.material)?o.material:[o.material]){if(['Unpainted','[Color D01]','[Color D01]1','[Color F07]','[0010_Snow]'].includes(m.name))m.color.set(t.wall);if(['Wood_Floor_Texture_by_AGF81','[Wood Floor]','89_pine light wood fine texture-seamless','CT-5572-T-Natural-Oak','71_dark  fine wood texture-seamless'].includes(m.name)){m.color.set(t.wood);m.map=id==='chalk'?paleWood:maps.teak.color;m.needsUpdate=true;}if(['mmjhfdghd179','mmjhfdghd180'].includes(m.name))m.color.set(t.linen);if(m.name==='mmjhfdghd189')m.color.set(t.accent);}});return t; }
+ return {design,root,palette,maps,movable,applyScheme};
 }
 
 export function addGarden(scene,palette){
