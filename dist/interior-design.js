@@ -124,36 +124,80 @@ export function buildInteriorDesign(scheme='earth'){
  if(industrial){begin('living-concrete-wall','Living','Board-jointed concrete feature wall with form-tie details');box([-37.12,1.39,-6.2],[.025,2.73,2.7],'stone');for(const z of[-6.65,-5.75])box([-37.139,1.39,z],[.008,2.71,.008],'teakDark');for(const y of[.6,2.15])for(const z of[-7.15,-6.2,-5.25])part('cylinder',[-37.143,y,z],[.009,.002,.009],'metal',[0,0,Math.PI/2]);}
  else if(tropical){begin('living-timber-wall','Living','Vertical teak slat wall behind lounge');box([-37.12,1.39,-6.2],[.025,2.73,2.7],'teakDark');for(let j=0;j<28;j++)box([-37.145,1.39,-7.48+j*.095],[.027,2.7,.028],'teak');}
  begin('living-rug','Living',industrial?'Textured grey living rug':'Natural woven living rug',[-39.85,.023,-6.25],0,true);soft([0,0,0],[3.45,.018,3.3],'rug');
- begin('living-sofa','Living',industrial?'Tailored grey linen L sectional':tropical?'Open-frame teak and cane sofa with loose linen upholstery':'Low ivory slipcovered sofa with tailored loose cushions',[-38.03,0,-6.85],Math.PI/2,true);
- // Six tapered feet and a recessed frame give the upholstered mass a real shadow gap.
- for(const x of[-1.13,0,1.13])for(const z of[-.31,.31])leg([x,.025,z],[x,.23,z],.035,industrial?'metal':'teakDark',.023);
- if(tropical){
-  soft([0,.27,0],[2.5,.1,.84],'teakDark');
-  for(const z of[-.405,.405])soft([0,.265,z],[2.58,.115,.065],'teak');
-  for(const x of[-1.3,1.3]){soft([x,.2,0],[.08,.12,.88],'teak');for(const z of[-.34,.34])leg([x,.12,z],[x,.68,z],.035,'teak',.028);soft([x,.66,0],[.075,.065,.9],'teak');soft([x,.43,.02],[.018,.34,.67],'cane');}
-  soft([0,.54,.405],[2.55,.43,.018],'cane');soft([0,.76,.415],[2.62,.055,.055],'teak');
- }else{
-  upholstery([0,.23,0],[2.56,.23,.87],'linen');
-  for(const x of[-1.3,1.3])upholstery([x,.44,.015],[.22,.57,.94],'linen');
-  if(!industrial)tube(roundedOutline(2.55,.88,.06,-.0).map(([x,y,z])=>[x,.145,z]),.0022,'linen');
- }
- for(const [j,x]of[-.82,0,.82].entries()){
-  upholstery([x,.42,-.035],[.805,.2,.84],'linen',[0,0,j===0?.008:j===2?-.008:0]);
-  upholstery([x,.72,.315],[.81,.57,.205],'linen',[.13,0,0]);
- }
- if(industrial){upholstery([-.82,.42,-.65],[.805,.2,.95],'linen');for(const x of[-1.13,-.5])leg([x,.025,-.97],[x,.22,-.97],.025,'metal',.014);}
- for(const [j,x,y,z,angle]of[[0,-1.02,.69,.17,-.18],[1,-.49,.64,.17,.14],[2,.22,.70,.17,-.11],[3,.91,.69,.17,.17]])upholstery([x,y,z],[j===1?.37:.44,j===1?.34:.43,.14],tropical?(j===0||j===3?'olive':'linen'):industrial?(j===0?'olive':'boucle'):(j%2?'linen':'olive'),[.15,.02,angle],true);
- part('cloth',[-1.28,.7,-.06],[.57,.48,.66],tropical?'olive':industrial?'olive':'boucle');
- begin('living-table','Living',industrial?'Nested concrete tables on tubular black steel rings':tropical?'Low round teak drum coffee table':'Round timber coffee table on twin fluted drums',[-39.55,0,-6.65],0,true);
+ begin('living-sofa','Living',industrial?'Soft sculpted linen sectional with loose cushions and draped throw':tropical?'Organic linen lounge with teak base, olive cushions and woven throw':'Soft ivory upholstered lounge with loose cushions and draped linen',[-38.1,0,-6.85],Math.PI/2,true);
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:0});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:1});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:2});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:3});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:4});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:5});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:6});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:7});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:8});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:9});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:10});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:11});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:12});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:13});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:14});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:15});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:16});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:17});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:18});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:19});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:20});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:21});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:22});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],industrial?'metal':'teakDark',[0,0,0],{asset:'soft-sofa',piece:23});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:24});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:25});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:26});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:27});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:28});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:29});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:30});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:31});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:32});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:33});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:34});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:35});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:36});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:37});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:38});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:39});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:40});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:41});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:42});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:43});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:44});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:45});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:46});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:47});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:48});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:49});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:50});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:51});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:52});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:53});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:54});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:55});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:56});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:57});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:58});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:59});
+ part('assetMesh',[0,0,0],[2.65,.82,1.42],'linen',[0,0,0],{asset:'soft-sofa',piece:60});
+ for(const [j,x]of[-.84,0,.79].entries())part('assetMesh',[x,.62,.36],[.43,.4,.17],j===1?'linen':'olive',[.12,j===0?-.15:.1,j===2?.13:-.1],{asset:'soft-sofa',piece:61});
+ part('assetMesh',[-.82,.49,-.23],[.82,.36,.65],industrial?'olive':tropical?'olive':'boucle',[.1,.12,0],{asset:'soft-sofa',piece:62});
+ begin('living-table','Living',industrial?'Nested concrete tables on tubular black steel rings':tropical?'Low round teak drum coffee table':'Round timber coffee table on twin fluted drums',[-40.2,0,-6.95],0,true);
  if(industrial){for(const [x,z,r,y]of[[.12,0,.62,.42],[-.45,-.35,.35,.29]]){ring([x,.08,z],r-.09,.013,'metal');for(const a of[0,2.1,4.2])rod([x+Math.cos(a)*(r-.09),.08,z+Math.sin(a)*(r-.09)],[x+Math.cos(a)*(r-.09),y,z+Math.sin(a)*(r-.09)],.012,'metal');cyl([x,y,z],r,.055,'stone');}}
  else if(tropical){cyl([0,.2,0],.48,.34,'teakDark');cyl([0,.41,0],.71,.07,'teak');}
  else{for(const x of[-.33,.33]){cyl([x,.2,0],.215,.34,'teak');for(let j=0;j<16;j++){const a=j*Math.PI/8;rod([x+Math.cos(a)*.21,.04,Math.sin(a)*.21],[x+Math.cos(a)*.21,.36,Math.sin(a)*.21],.01,'teak');}}cyl([0,.4,0],.73,.065,'teak');}
  const top=industrial?.453:tropical?.445:.433;
  tray([-.16,top,0],.245);vase([-.22,top+.028,-.045],.17,industrial?'ceramic':'clay',industrial?'bottle':'urn');vase([.015,top+.03,.06],.065,'ceramic','bowl');
  book([.24,top+.004,-.19],.29,.22,.023,industrial?'metal':'olive',.15);book([.24,top+.032,-.19],.265,.205,.02,'linen',-.06);tablePlant([.27,top+.056,-.18],.17);
- if(industrial){chair('living-chair','Living',[-41.15,0,-7.05],-Math.PI/2,true);}else{chair('living-chair-a','Living',[-41.05,0,-7.05],-Math.PI/2,true);chair('living-chair-b','Living',[-40.95,0,-5.25],-Math.PI/2,true);}
+ if(industrial){chair('living-chair','Living',[-41.75,0,-7.95],-Math.PI/2,true);}else{chair('living-chair-a','Living',[-42,0,-7.65],-Math.PI/2,true);chair('living-chair-b','Living',[-42,0,-4.95],-Math.PI/2,true);}
  sideboard('living-console','Living',[-42.78,0,-6.3],1.65,Math.PI/2);shelf('living-shelves','Living',[-42.82,0,-8],Math.PI/2);art('living-art','Living',[-43.04,1.7,-6.2],Math.PI/2);
- plant('living-plant','Living',[-37.57,0,-8.62],1.95);if(!industrial)plant('living-olive','Living',[-42.55,0,-4.8],1.65);
+ plant('living-plant','Living',[-37.57,0,-8.62],1.95);if(!industrial)plant('living-olive','Living',[-41.5,0,-8.35],1.65);
  pendant('living-pendant','Living',[-39.45,2.37,-6.2],industrial?.42:tropical?.54:.34);
  begin('dining-table','Dining',industrial?'Oak dining table on black trestle frame':'Solid timber dining table with softened rectangular top',[-40.3,0,-3.2],0,true);soft([0,.76,0],[1.55,.065,.9],'teak');if(industrial){for(const x of[-.57,.57]){rod([x,.03,-.3],[x,.72,-.3],.025,'metal');rod([x,.03,.3],[x,.72,.3],.025,'metal');rod([x,.13,-.3],[x,.13,.3],.025,'metal');}}else for(const x of[-.59,.59])for(const z of[-.29,.29])rod([x,.02,z],[x,.73,z],.04,'teak');
  for(const [j,seat]of[[-40.3,0,-4.13],[-40.3,0,-2.27],[-41.43,0,-3.2],[-39.17,0,-3.2]].entries()){const angle=Math.atan2(seat[0]+40.3,seat[2]+3.2);chair('dining-chair-'+j,'Dining',seat,angle);item.facing={position:seat,rotation:angle,target:[-40.3,0,-3.2]};}
