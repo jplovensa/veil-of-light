@@ -1,90 +1,121 @@
-// Shared, deterministic design geometry used by Three.js and the SketchUp builder.
-export function buildInteriorDesign(){
- const materials={limewash:{color:'#e7ddc9',roughness:.96,texture:'plaster'},teak:{color:'#b48b60',roughness:.52,texture:'wood'},teakDark:{color:'#71563d',roughness:.6,texture:'wood'},cane:{color:'#bdaa83',roughness:.78,texture:'cane'},linen:{color:'#e9e2cf',roughness:.99,texture:'linen'},olive:{color:'#78805a',roughness:.98,texture:'linen'},clay:{color:'#9e8064',roughness:.86,texture:'plaster'},stone:{color:'#d8cbb3',roughness:.76,texture:'stone'},rug:{color:'#b7a17c',roughness:1,texture:'linen'},bronze:{color:'#4e4939',roughness:.48,metalness:.65},brass:{color:'#b19b61',roughness:.4,metalness:.72},leaf:{color:'#47684a',roughness:.84},leafLight:{color:'#739061',roughness:.85},ceramic:{color:'#ece3d2',roughness:.65},mirror:{color:'#bdc8bb',roughness:.08,metalness:.9},glass:{color:'#d4e3d4',roughness:.1,opacity:.18},light:{color:'#ffe3a8',roughness:.6,emissive:'#ffcd79',emissiveIntensity:.7}};
- const items=[];let item;
- const begin=(room,name)=>{item={room,name,parts:[]};items.push(item);};
- const part=(shape,p,s,m,rotation=[0,0,0],extra={})=>item.parts.push({shape,p,s,m,rotation,...extra});
- const box=(p,s,m,ry=0)=>part('box',p,s,m,[0,ry,0]);
- const ball=(p,s,m,rotation=[0,0,0])=>part('sphere',p,s,m,rotation);
- const soft=(p,s,m,rotation=[0,0,0])=>part('roundedBox',p,s,m,rotation);
- const cyl=(p,r,h,m,rt=r,rotation=[0,0,0])=>part('cylinder',p,[r,h,rt],m,rotation);
- const rod=(a,b,r,m)=>item.parts.push({shape:'rod',a,b,r,m});
- const panelSlats=(p,w,h,axis='z',spacing=.075)=>{
-  const n=Math.floor(w/spacing);for(let i=0;i<n;i++){const d=(i-(n-1)/2)*spacing;box([p[0]+(axis==='x'?d:0),p[1],p[2]+(axis==='z'?d:0)],axis==='x'?[.035,h,.045]:[.045,h,.035],'teak');}
+// Native SketchUp specification. Each scheme changes geometry, construction and decor.
+export const schemeNames={earth:'Mediterranean',chalk:'Concrete Industrial',canopy:'Modern Tropical'};
+export function buildInteriorDesign(scheme='earth'){
+ if(!schemeNames[scheme])throw new Error('Unknown interior scheme: '+scheme);
+ const industrial=scheme==='chalk',tropical=scheme==='canopy';
+ const materials={
+  limewash:{color:industrial?'#c7c5bc':'#e8dfcc',roughness:.96,texture:industrial?'concrete':'plaster'},
+  teak:{color:industrial?'#aa9473':'#b68a59',roughness:.69,texture:'wood'},teakDark:{color:industrial?'#665c4e':'#795b3b',roughness:.8,texture:'wood'},
+  cane:{color:'#bea67c',roughness:.85,texture:'cane'},linen:{color:industrial?'#bcbcb5':'#e9dfca',roughness:1,texture:'linen'},
+  olive:{color:industrial?'#777a72':tropical?'#657347':'#b39a78',roughness:1,texture:'linen'},boucle:{color:industrial?'#b9b1a1':'#e8dfce',roughness:1,texture:'boucle'},
+  clay:{color:industrial?'#999389':'#a58665',roughness:.9,texture:'plaster'},stone:{color:industrial?'#b7b6af':'#d8cbb2',roughness:.8,texture:industrial?'concrete':'stone'},
+  rug:{color:industrial?'#a29e92':'#bfae8f',roughness:1,texture:'linen'},metal:{color:'#292d2a',roughness:.48,metalness:.65},bronze:{color:'#4e493c',roughness:.5,metalness:.65},brass:{color:'#b19b70',roughness:.44,metalness:.65},
+  leaf:{color:'#506d43',roughness:.8},leafLight:{color:'#7a8d5a',roughness:.85},ceramic:{color:industrial?'#b2ada2':'#e4d9c3',roughness:.7},mirror:{color:'#bdc9bf',roughness:.1,metalness:1},glass:{color:'#d7e0d7',roughness:.1,opacity:.22},light:{color:'#ffe3b0',roughness:.5,emissive:'#ffca80',emissiveIntensity:.65}
  };
- function lamp(room,p,scale=1){begin(room,'Linen and teak table lamp');cyl([p[0],p[1]+.13*scale,p[2]],.085*scale,.26*scale,'teakDark',.075*scale);cyl([p[0],p[1]+.34*scale,p[2]],.22*scale,.25*scale,'linen',.14*scale);ball([p[0],p[1]+.29*scale,p[2]],[.12,.12,.12].map(v=>v*scale),'light');}
- function vase(p,h=.3,m='clay'){part('vessel',[p[0],p[1]+h*.5,p[2]],[h*.32,h,h*.12],m);}
- function plant(room,p,h=1.7){begin(room,'Tropical planting in a clay vessel');part('vessel',[p[0],p[1]+.24,p[2]],[.31,.48,.285],'clay');cyl([p[0],p[1]+.405,p[2]],.259,.015,'teakDark');for(let i=0;i<11;i++){const a=i*2.399,reach=.26+(i%3)*.075,top=p[1]+h*(.64+(i%4)*.1);const end=[p[0]+Math.cos(a)*reach,top,p[2]+Math.sin(a)*reach];rod([p[0],p[1]+.4,p[2]],end,.012,'leaf');part('leaf',[end[0]+Math.cos(a)*.13,end[1]-.02,end[2]+Math.sin(a)*.13],[.34,.72,.075],i%2?'leafLight':'leaf',[Math.sin(a)*.65,a,Math.cos(a)*.6]);}}
- function pendant(room,p,r=.38,h=.32){begin(room,'Handwoven cane pendant');rod([p[0],p[1]+h,p[2]],[p[0],p[1]+1,p[2]],.008,'bronze');part('shade',p,[r,h,r],'cane');for(let j=0;j<24;j++){const a=j*Math.PI/12;let last;for(let k=0;k<=10;k++){const t=k/10*Math.PI/2,rr=r*Math.sin(t),v=[p[0]+Math.cos(a)*rr,p[1]+h*Math.cos(t),p[2]+Math.sin(a)*rr];if(last)rod(last,v,.003,'cane');last=v;}}ball([p[0],p[1]+.13,p[2]],[.07,.1,.07],'light');}
- function chair(room,p,ry=0,arm=false){
-  begin(room,arm?'Sculpted teak lounge chair with handwoven cane':'Curved teak and cane dining chair');
-  const point=(x,y,z)=>[p[0]+x*Math.cos(ry)+z*Math.sin(ry),p[1]+y,p[2]-x*Math.sin(ry)+z*Math.cos(ry)],w=arm?.71:.5,d=arm?.7:.52,seat=arm?.36:.45;
-  for(const x of[-w*.37,w*.37])for(const z of[-d*.35,d*.35])rod(point(x*1.12,.018,z*1.15),point(x,seat+.02,z),arm?.026:.022,'teak');
-  soft(point(0,seat,0),[w,.065,d],'teak',[0,ry,0]);soft(point(0,seat+.065,-.015),[w*.9,.085,d*.87],'linen',[arm?-.05:0,ry,0]);
-  const backZ=x=>d*.4+.065*(1-(x/(w*.47))**2),bottom=seat+.13,top=seat+(arm?.53:.47);
-  for(const x of[-w*.47,w*.47])rod(point(x,seat,backZ(x)-.035),point(x,top,backZ(x)),.022,'teak');
-  for(let i=0;i<16;i++){const x1=-w*.47+i*w*.94/16,x2=-w*.47+(i+1)*w*.94/16;rod(point(x1,top,backZ(x1)),point(x2,top,backZ(x2)),.022,'teak');rod(point(x1,bottom,backZ(x1)),point(x2,bottom,backZ(x2)),.017,'teak');}
-  for(let i=0;i<19;i++){const x=-w*.425+i*w*.85/18;rod(point(x,bottom+.012,backZ(x)),point(x,top-.012,backZ(x)),.0033,'cane');}
-  for(let j=0;j<16;j++){const y=bottom+.015+(top-bottom-.03)*j/15;for(let i=0;i<9;i++){const x1=-w*.43+i*w*.86/9,x2=-w*.43+(i+1)*w*.86/9;rod(point(x1,y,backZ(x1)+Math.sin(i*Math.PI)*.002),point(x2,y,backZ(x2)),.003,'cane');}}
-  if(arm)for(const x of[-w*.48,w*.48]){rod(point(x,seat+.04,-.27),point(x,seat+.28,-.25),.022,'teak');rod(point(x,seat+.28,-.29),point(x,seat+.34,.29),.029,'teak');}
+ const items=[];let item;
+ const begin=(id,room,name,p=[0,0,0],ry=0,movable=false)=>{item={id,room,name,pivot:p,rotation:ry,movable,parts:[]};items.push(item);};
+ const pt=(p)=>{const [x,y,z]=p,[a,b,c]=item.pivot,r=item.rotation;return[a+x*Math.cos(r)+z*Math.sin(r),b+y,c-x*Math.sin(r)+z*Math.cos(r)];};
+ const part=(shape,p,s,m,r=[0,0,0],extra={})=>item.parts.push({shape,p:pt(p),s,m,rotation:[r[0],r[1]+item.rotation,r[2]],...extra});
+ const box=(p,s,m,r=0)=>part('box',p,s,m,[0,r,0]);
+ const soft=(p,s,m='linen',r=[0,0,0])=>part('roundedBox',p,s,m,r);
+ const cyl=(p,rad,h,m,top=rad)=>part('cylinder',p,[rad,h,top],m);
+ const ball=(p,s,m,r=[0,0,0])=>part('sphere',p,s,m,r);
+ const rod=(a,b,r,m)=>item.parts.push({shape:'rod',a:pt(a),b:pt(b),r,m});
+ const tube=(path,r,m)=>item.parts.push({shape:'tube',path:path.map(pt),r,m});
+ const lathe=(p,r,h,m,profile)=>part('lathe',p,[r,h,r],m,[0,0,0],{profile});
+ const arch=(p,w,h,d,m)=>part('archPanel',p,[w,h,d],m);
+ const ring=(p,rad,t,m)=>part('torus',p,[rad,t,rad],m);
+ function vase(p,h=.27,m='clay',type='urn'){
+  const profiles={urn:[[0,-.5],[.5,-.5],[.92,-.3],[1,-.02],[.82,.2],[.4,.35],[.36,.5],[.27,.5],[.28,.34],[.68,.12],[.75,-.05],[.6,-.3],[0,-.4]],bottle:[[0,-.5],[.7,-.5],[1,-.37],[1,-.04],[.68,.2],[.3,.3],[.3,.5],[.22,.5],[.22,.28],[.52,.12],[.7,-.1],[0,-.4]],bowl:[[0,-.5],[.4,-.5],[1,.35],[1,.5],[.9,.5],[.5,-.28],[0,-.3]]};
+  lathe([p[0],p[1]+h/2,p[2]],h*(type==='bowl'?.8:.4),h,m,profiles[type]);
  }
- function cabinet(room,p,s,doors=3,ry=0){begin(room,'Teak joinery with woven cane fronts');box(p,s,'teakDark',ry);const point=(x,y,z)=>[p[0]+x*Math.cos(ry)+z*Math.sin(ry),p[1]+y,p[2]-x*Math.sin(ry)+z*Math.cos(ry)];for(let i=0;i<doors;i++){const x=-s[0]/2+s[0]/doors*(i+.5);box(point(x,0,s[2]/2+.012),[s[0]/doors-.025,s[1]-.08,.035],'teak',ry);box(point(x,0,s[2]/2+.034),[s[0]/doors-.09,s[1]-.15,.014],'cane',ry);rod(point(x+s[0]/doors*.3,-.06,s[2]/2+.065),point(x+s[0]/doors*.3,.08,s[2]/2+.065),.009,'brass');}}
- function artwork(room,p,w,h,ry=0){begin(room,'Botanical relief artwork');box(p,[w,h,.045],'teakDark',ry);box([p[0]+Math.sin(ry)*.027,p[1],p[2]+Math.cos(ry)*.027],[w-.06,h-.06,.015],'linen',ry);for(let i=0;i<4;i++){const x=(i-1.5)*w*.16;ball([p[0]+x*Math.cos(ry)+Math.sin(ry)*.04,p[1]+Math.sin(i*1.7)*h*.16,p[2]-x*Math.sin(ry)+Math.cos(ry)*.04],[w*.18,h*.35,.014],i%2?'olive':'clay',[0,ry,(i-1.5)*.35]);}}
- function bedside(room,p){begin(room,'Round teak bedside table');cyl([p[0],p[1]+.25,p[2]],.235,.46,'teak',.235);cyl([p[0],p[1]+.49,p[2]],.26,.035,'stone');lamp(room,[p[0],p[1]+.51,p[2]],.7);}
- begin('Living','Honed travertine ground-floor finish');box([-40.05,.008,-4.55],[6.15,.016,8.9],'stone');
- begin('Loft bedroom','Teak loft floor');for(let i=0;i<34;i++)box([-40.05,2.956,-7.13+i*.13],[6,.012,.124],'teak');
- begin('Loft bedroom','Teak gallery floor');for(let i=0;i<19;i++)box([-37.39,2.956,-2.63+i*.13],[.68,.012,.124],'teak');
- begin('Loft study','Teak rear gallery floor');for(let i=0;i<12;i++)box([-40.05,2.906,-8.73+i*.13],[6,.012,.124],'teak');
- // Ground floor — an open living and dining space with a clear west-side route to the stair.
- begin('Living','Natural woven living rug');box([-39.85,.018,-6.25],[3.45,.024,3.3],'rug');
- begin('Living','Linen sofa on a teak plinth');box([-37.65,.18,-6.15],[.87,.18,2.65],'teak');for(const z of[-7.25,-5.05])for(const x of[-37.95,-37.35])cyl([x,.052,z],.035,.074,'teakDark');for(let i=0;i<3;i++)soft([-37.7,.43,-7.03+i*.88],[.94,.3,.868],'linen');soft([-37.18,.7,-6.15],[.25,.72,2.72],'linen');for(const z of[-7.47,-4.83])soft([-37.66,.61,z],[1.0,.48,.23],'linen');for(let i=0;i<3;i++)soft([-37.49,.8,-7+i*.84],[.18,.47,.49],i===1?'linen':'olive',[0,0,-.2]);
- begin('Living','Travertine coffee table');cyl([-39.4,.23,-6.15],.46,.4,'stone');cyl([-39.4,.46,-6.15],.7,.08,'stone');box([-39.52,.525,-6.18],[.3,.035,.21],'teakDark',.2);box([-39.51,.558,-6.17],[.28,.03,.2],'linen',.12);vase([-39.13,.51,-6.28],.23,'ceramic');
- chair('Living',[-41.05,0,-6.95],-Math.PI/2,true);chair('Living',[-40.9,0,-5.3],-Math.PI/2,true);
- cabinet('Living',[-42.77,.36,-6.1],[2.15,.64,.4],3,Math.PI/2);artwork('Living',[-43.02,1.72,-6.1],1.4,.95,Math.PI/2);
- begin('Living','Console styling');vase([-42.75,.7,-6.85],.36);vase([-42.75,.7,-6.5],.22,'ceramic');lamp('Living',[-42.72,.7,-5.45],.85);
- plant('Living',[-37.55,0,-8.15],1.9);plant('Living',[-42.52,0,-8.17],1.75);
- pendant('Living',[-39.45,2.28,-6.2],.48,.38);
- begin('Dining','Round teak dining table');cyl([-40.3,.36,-3.2],.26,.7,'teak');cyl([-40.3,.75,-3.2],.7,.065,'teak');
- for(const seat of[[-40.3,0,-4.18],[-40.3,0,-2.22],[-41.28,0,-3.2],[-39.32,0,-3.2]]){const angle=Math.atan2(seat[0]-(-40.3),seat[2]-(-3.2));chair('Dining',seat,angle);item.facing={position:seat,rotation:angle,target:[-40.3,0,-3.2]};}
- begin('Dining','Dining ceramics');vase([-40.3,.79,-3.2],.24,'ceramic');cyl([-40.01,.8,-3.18],.12,.025,'clay');pendant('Dining',[-40.3,2.18,-3.2],.38,.3);
- // Kitchen — original cabinetry and appliances retained; finish panel stops before the tall appliance unit.
- begin('Kitchen','Travertine backsplash');box([-37.065,1.22,-1.85],[.035,.55,1.65],'stone');
- plant('Kitchen',[-38.5,0,-.55],1.3);
- // Guest suite — detailed source bed retained, with a teak/cane headboard and coordinated accessories.
- begin('Guest bedroom','Cane headboard');box([-47.14,1.12,-3.17],[.07,1.7,2.65],'teak');box([-47.095,1.16,-3.17],[.02,1.47,2.44],'cane');panelSlats([-47.065,1.46,-3.17],2.5,.86,'z',.11);
- bedside('Guest bedroom',[-46.72,0,-4.34]);bedside('Guest bedroom',[-46.72,0,-1.98]);
- begin('Guest bedroom','Soft linen window panels');for(const x of[-46.94,-43.58])for(let i=0;i<7;i++)box([x+(i-3)*.035,1.42,-1.54+Math.sin(i*1.7)*.035],[.039,2.7,.045],'linen');
- cabinet('Guest bedroom',[-43.59,.48,-2.48],[1.25,.9,.42],2,-Math.PI/2);artwork('Guest bedroom',[-43.29,1.64,-2.55],.9,.82,-Math.PI/2);
- begin('Guest bedroom','Guest tray');vase([-43.59,.95,-2.85],.18,'ceramic');plant('Guest bedroom',[-43.72,0,-4.22],1.25);
- // Bathrooms — existing sanitary fittings remain; stone floors, teak screens and accessories finish both rooms.
- for(const [room,x,z,w,d]of[['Guest bathroom',-46.24,-6.12,1.82,2.23],['Main bathroom',-37.89,-3.78,1.58,1.72]]){
-  begin(room,'Honed travertine floor');box([x,.027,z],[w,.025,d],'stone');
-  begin(room,'Teak bath mat');const mx=room==='Guest bathroom'?-45.85:-38.26,mz=room==='Guest bathroom'?-5.72:-3.28;for(let i=0;i<11;i++)box([mx+(i-4)*.065,.061,mz],[.045,.035,.5],'teak');
-  begin(room,'Towel rail and linen');const tx=room==='Guest bathroom'?-45.36:-38.65,tz=room==='Guest bathroom'?-5.65:-4.02;rod([tx,1.21,tz-.34],[tx,1.21,tz+.34],.014,'brass');box([tx-.025,.98,tz],[.035,.45,.44],'linen');
-  if(room==='Guest bathroom'){begin(room,'Ceramic bath accessories');vase([-46.95,.896,-5.72],.16,'ceramic');}
+ function decor(p,tall=false){vase(p,tall?.43:.24,industrial?'ceramic':'clay',industrial?'bottle':'urn');if(tall){for(let j=0;j<4;j++){const a=j*2.3,top=[p[0]+Math.cos(a)*.17,p[1]+.9-j*.06,p[2]+Math.sin(a)*.15];rod([p[0],p[1]+.29,p[2]],top,.004,'teakDark');for(let k=0;k<3;k++)part('leaf',[top[0]+Math.sin(k+a)*.06,top[1]-k*.09,top[2]],[.07,.15,.012],'leaf',[.2,a+k,.5]);}}}
+ function plant(id,room,p,h=1.7){
+  begin(id,room,tropical?'Broad-leaf tropical plant in clay vessel':'Olive branches in an aged ceramic urn',p,0,true);vase([0,0,0],.5,'clay');
+  if(tropical){for(let j=0;j<7;j++){const a=j*2.4,end=[Math.cos(a)*.3,h*(.65+(j%3)*.12),Math.sin(a)*.3];rod([0,.35,0],end,.009,'leaf');part('leaf',[end[0],end[1]-.05,end[2]],[.36,.72,.06],j%2?'leafLight':'leaf',[Math.sin(a)*.5,a,Math.cos(a)*.6]);}}
+  else {rod([0,.3,0],[0,h*.86,0],.018,'teakDark');for(let j=0;j<8;j++){const a=j*2.4,start=[0,h*(.4+(j%3)*.13),0],end=[Math.cos(a)*.4,h*(.66+(j%4)*.08),Math.sin(a)*.4];rod(start,end,.005,'teakDark');for(let k=0;k<5;k++){const t=.25+k*.16;part('leaf',[end[0]*t,end[1]-(1-t)*.24,end[2]*t],[.07,.16,.015],j%2?'leafLight':'leaf',[.5,a+k,Math.sin(k)*.7]);}}}
  }
- begin('Guest bathroom','Floating teak vanity and stone basin');box([-46.96,.57,-5.97],[.48,.5,.66],'teak');box([-46.96,.86,-5.97],[.53,.07,.71],'stone');cyl([-46.94,.95,-5.98],.14,.1,'ceramic',.18);cyl([-46.94,1.002,-5.98],.14,.012,'stone');cyl([-46.94,1.01,-5.98],.015,.01,'bronze');rod([-47.1,.9,-5.97],[-47.1,1.14,-5.97],.015,'brass');rod([-47.1,1.14,-5.97],[-46.94,1.14,-5.97],.015,'brass');
- begin('Guest bathroom','Framed vanity mirror');box([-47.16,1.56,-5.97],[.032,.76,.59],'teak');box([-47.138,1.56,-5.97],[.012,.69,.52],'mirror');plant('Guest bathroom',[-44.4,0,-6.8],1.1);
- for(const [room,x,z,w,d]of[['Guest bathroom',-46.69,-6.74,.88,.94],['Main bathroom',-38.2,-4.37,.73,.86]]){
-  begin(room,'Travertine shower with glass screen');box([x,.045,z],[w,.05,d],'stone');box([x+w/2+.012,1.1,z],[.015,2.05,d],'glass');rod([x+w/2+.012,.08,z-d/2],[x+w/2+.012,2.14,z-d/2],.009,'brass');box([x-w/2-.015,1.22,z],[.025,2.35,d],'stone');rod([x-w/2+.025,1.0,z],[x-w/2+.025,2.12,z],.013,'brass');rod([x-w/2+.025,2.12,z],[x-.12,2.12,z],.013,'brass');cyl([x-.12,2.1,z],.105,.025,'brass');
+ function pendant(id,room,p,r=.4){
+  begin(id,room,industrial?'Black spun-metal dome pendant':tropical?'Wide woven rattan dome pendant':'Bell-shaped woven fibre pendant',p);
+  const suspension=Math.max(.3,2.88-p[1]);rod([0,.24,0],[0,suspension,0],.006,'metal');cyl([0,suspension,0],.055,.025,'metal');
+  if(industrial)lathe([0,0,0],r,.35,'metal',[[0,.5],[.16,.46],[.6,.35],[.88,.08],[1,-.3],[1,-.5],[.96,-.5],[.85,0],[.55,.27],[.15,.38]]);
+  else if(tropical)lathe([0,0,0],r,.32,'cane',[[.12,.5],[.48,.42],[.8,.2],[1,-.23],[1,-.5],[.95,-.5],[.76,.12],[.45,.34],[.12,.4]]);
+  else lathe([0,0,0],r,.52,'cane',[[.24,.5],[.45,.4],[.62,.13],[.78,-.18],[1,-.5],[.93,-.5],[.72,-.14],[.56,.13],[.38,.36],[.23,.42]]);
+  ball([0,-.07,0],[.07,.1,.07],'light');
  }
- begin('Main bathroom','Teak vanity front');box([-37.57,.57,-3.34],[.035,.43,.8],'teak');box([-37.595,.57,-3.34],[.015,.34,.67],'cane');rod([-37.62,.7,-3.48],[-37.62,.7,-3.2],.009,'brass');
- // Loft suite — the floor is 2.95 m above ground; the stair void remains open.
- begin('Loft bedroom','Teak and cane bedhead');box([-37.11,3.78,-4.88],[.06,1.45,2.55],'teak');box([-37.155,3.82,-4.88],[.02,1.24,2.35],'cane');panelSlats([-37.18,4.18,-4.88],2.42,.56,'z',.11);
- bedside('Loft bedroom',[-37.62,2.95,-6.2]);bedside('Loft bedroom',[-37.62,2.95,-3.48]);
- begin('Loft bedroom','Soft linen gallery curtains');for(const x of[-42.77,-37.33])for(let i=0;i<7;i++)box([x+(i-3)*.035,3.78,-8.79+Math.sin(i*1.7)*.035],[.039,1.7,.045],'linen');
- cabinet('Loft bedroom',[-42.65,3.9,-5.65],[1.7,1.86,.52],3,Math.PI/2);
- begin('Loft bedroom','Low reading rug');box([-41.27,2.924,-7.92],[2.2,.018,1.32],'rug');chair('Loft bedroom',[-42.1,2.916,-7.8],-.9,true);
- begin('Loft bedroom','Reading side table');cyl([-41.28,3.146,-7.85],.22,.46,'teak');vase([-41.28,3.38,-7.85],.18,'ceramic');
- begin('Loft study','Built-in teak writing desk');box([-39.25,3.69,-8.5],[1.55,.065,.48],'teak');for(const x of[-39.9,-38.6])box([x,3.28,-8.5],[.055,.76,.36],'teak');box([-39.75,3.77,-8.5],[.25,.03,.18],'linen');lamp('Loft study',[-38.68,3.73,-8.49],.65);chair('Loft study',[-39.27,2.916,-7.85],0);
- plant('Loft bedroom',[-40.75,2.95,-6.7],1.45);
- begin('Loft bedroom','Low teak bench');box([-40.75,3.2,-4.95],[.4,.42,1.45],'teak');box([-40.75,3.445,-4.95],[.42,.08,1.46],'linen');
- // Rear outdoor strip and entry — durable teak and clay keep the same palette outside.
- begin('Terrace','Teak outdoor deck');for(let i=0;i<17;i++)box([-42.1,.012,-9.12-i*.107],[10.15,.024,.095],'teak');
- for(const x of[-45.9,-38.15]){begin('Terrace','Teak outdoor lounge bench');box([x,.24,-9.85],[1.6,.12,.67],'teak');for(const dx of[-.63,.63])box([x+dx,.12,-9.85],[.085,.22,.48],'teak');soft([x,.34,-9.85],[1.54,.12,.62],'linen');box([x,.55,-10.12],[1.6,.44,.08],'teak');soft([x-.45,.53,-10.02],[.42,.4,.14],'olive',[.12,0,0]);}
- begin('Terrace','Outdoor side table');cyl([-42.05,.21,-9.9],.3,.4,'stone');vase([-42.05,.42,-9.9],.26,'clay');
- plant('Terrace',[-47.0,0,-10.48],1.7);plant('Terrace',[-36.95,0,-10.48],1.6);
- begin('Entry','Natural fibre entrance mat');box([-40.05,.028,.38],[1.45,.024,.58],'rug');plant('Entry',[-43.75,0,.35],1.15);
+ function lamp(p,wall=false){
+  if(industrial){rod([p[0],p[1],p[2]],[p[0],p[1]+.38,p[2]],.009,'metal');cyl([p[0],p[1]+.36,p[2]],.07,.18,'metal',.04);ball([p[0],p[1]+.25,p[2]],[.055,.065,.055],'light');}
+  else{cyl([p[0],p[1]+.12,p[2]],.055,.24,'clay',.08);lathe([p[0],p[1]+.35,p[2]],.17,.24,'linen',[[.68,.5],[1,-.5],[.95,-.5],[.63,.48]]);}
+ }
+ function chair(id,room,p,ry,arm=false){
+  begin(id,room,industrial?(arm?'Steel-framed upholstered lounge chair':'Oak shell dining chair on black steel legs'):tropical?(arm?'Teak sling lounge chair with woven cane back':'Curved teak dining chair with cane seat'):'Curved wishbone timber chair with upholstered seat',p,ry,true);
+  const w=arm?.68:.5,d=arm?.66:.5,seat=arm?.35:.44;
+  for(const x of[-w*.37,w*.37])for(const z of[-d*.34,d*.34])rod([x*1.08,.025,z*1.12],[x,seat,z],industrial?.012:.023,industrial?'metal':'teak');
+  soft([0,seat,0],[w,.075,d],industrial?'teak':'teakDark');soft([0,seat+.075,-.015],[w*.92,.09,d*.88],tropical?'cane':arm?'boucle':'linen');
+  if(industrial){soft([0,seat+.3,d*.38],[w,.38,.09],arm?'boucle':'teak',[.1,0,0]);if(arm)for(const x of[-w/2,w/2])rod([x,seat,-.25],[x,seat+.25,.24],.014,'metal');}
+  else if(tropical){for(const x of[-w*.45,w*.45])rod([x,seat,d*.4],[x,seat+.52,d*.49],.023,'teak');soft([0,seat+.32,d*.46],[w*.86,.37,.035],'cane',[.1,0,0]);tube(Array.from({length:11},(_,i)=>{const t=i/10*Math.PI;return[Math.cos(t)*w*.48,seat+.51,d*.36+Math.sin(t)*.11]}),.027,'teak');}
+  else{tube(Array.from({length:13},(_,i)=>{const t=i/12*Math.PI;return[Math.cos(t)*w*.51,seat+.4,d*.2+Math.sin(t)*.18]}),.027,'teak');for(const x of[-w*.4,w*.4])rod([x,seat,d*.33],[x*.65,seat+.4,d*.3],.019,'teak');rod([0,seat+.12,d*.33],[0,seat+.4,d*.35],.025,'teak');}
+  if(arm&&!industrial)for(const x of[-w*.48,w*.48]){rod([x,seat,-.25],[x,seat+.25,-.23],.022,'teak');rod([x,seat+.25,-.27],[x,seat+.32,.26],.029,'teak');}
+ }
+ function sideTable(id,room,p){begin(id,room,industrial?'Open steel bedside table with oak shelf':'Solid timber bedside drum and linen lamp',p,0,true);if(industrial){for(const x of[-.18,.18])for(const z of[-.18,.18])rod([x,.03,z],[x,.51,z],.012,'metal');box([0,.12,0],[.4,.035,.4],'teak');box([0,.51,0],[.43,.04,.43],'stone');}else{cyl([0,.25,0],.215,.48,'teak');cyl([0,.5,0],.24,.035,'stone');}lamp([0,.52,0]);}
+ function shelf(id,room,p,ry=0){
+  begin(id,room,industrial?'Open black steel display shelving':'Arched timber display cabinet with pottery',p,ry);
+  if(industrial){for(const x of[-.4,.4])for(const z of[-.14,.14])rod([x,0,z],[x,1.65,z],.014,'metal');}
+  else {arch([0,.83,-.13],.9,1.66,.08,'teak');arch([0,.84,-.079],.78,1.53,.035,'limewash');}
+  for(let j=0;j<4;j++){box([0,.13+j*.39,0],[.79,.035,.3],'teak');vase([j%2?.18:-.15,.16+j*.39,.02],.17+j*.015,j%2?'clay':'ceramic',j===1?'bottle':'urn');}
+ }
+ function sideboard(id,room,p,w=1.8,ry=0){begin(id,room,industrial?'Oak sideboard on exposed steel frame':tropical?'Fluted teak console with cane doors':'Fluted timber console with recessed plinth',p,ry);box([0,.35,0],[w,.58,.36],'teakDark');box([0,.66,0],[w+.03,.04,.39],industrial?'stone':'teak');
+  if(industrial){for(const x of[-w*.42,w*.42])for(const z of[-.13,.13])rod([x,.02,z],[x,.16,z],.012,'metal');for(const x of[-w*.25,w*.25])box([x,.36,.19],[w/2-.02,.54,.025],'teak');}
+  else for(let i=0;i<Math.floor(w/.055);i++)box([-w/2+.04+i*.055,.36,.193],[.024,.53,.026],tropical&&i%3===0?'cane':'teak');decor([-.42,.69,0],true);vase([.34,.69,0],.22,'ceramic','bowl');}
+ function bed(id,room,p,ry=0){begin(id,room,industrial?'Grey upholstered platform bed with steel feet':tropical?'Teak platform bed with olive linen throw':'Ivory upholstered platform bed with sand throw',p,ry,true);
+  for(const x of[-.72,.72])for(const z of[-.81,.81])cyl([x,.08,z],.025,.15,industrial?'metal':'teakDark');soft([0,.23,0],[1.85,.3,2.13],industrial?'boucle':tropical?'teak':'linen');soft([0,.46,0],[1.77,.24,2.03],'linen');soft([0,.585,-.12],[1.8,.065,1.8],'linen');for(const x of[-.44,.44])soft([x,.7,.64],[.78,.2,.48],'linen',[.1,0,x*.06]);for(const x of[-.43,.43])soft([x,.78,.84],[.7,.32,.13],x<0?'olive':'linen',[-.1,0,0]);soft([0,.63,-.62],[1.82,.045,.57],'olive');for(let i=0;i<5;i++)rod([-.86+i*.43,.662,-.88],[-.86+i*.43,.662,-.37],.003,tropical?'linen':'olive');}
+ function bedWall(id,room,p,w=2.65,ry=0){begin(id,room,industrial?'Concrete bed wall with ash flutes and linear light':tropical?'Full-height teak slat bed wall and upholstered headrail':'Soft linen headboard against limewashed wall',p,ry);if(!industrial&&!tropical){soft([0,.7,0],[w,.94,.1],'linen');}else{box([0,1.0,-.025],[w,1.96,.07],industrial?'stone':'teakDark');for(let j=0;j<Math.floor(w/.095);j++)box([-w/2+.05+j*.095,1.29,.025],[.025,1.27,.035],industrial?'teakDark':'teak');soft([0,.68,.08],[w,.35,.09],industrial?'boucle':'linen');box([0,.94,.065],[w-.04,.018,.018],'light');}}
+ function art(id,room,p,ry){begin(id,room,industrial?'Layered monochrome relief artwork':'Textured linen and earth-tone wall relief',p,ry);box([0,0,0],[.78,.8,.035],industrial?'metal':'teakDark');box([0,0,.025],[.72,.74,.02],'linen');for(let j=0;j<3;j++)box([-.23+j*.22,-.18+j*.12,.045],[.22,.24,.02],industrial?(j%2?'stone':'metal'):(j%2?'clay':'ceramic'));}
+ function vanity(id,room,p,ry){begin(id,room,industrial?'Concrete vanity with open towel shelf and backlit oval mirror':tropical?'Teak vanity with cane front and open linen shelf':'Floating travertine vanity with oval brass mirror',p,ry);
+  if(industrial){box([0,.67,0],[.7,.28,.46],'stone');for(const x of[-.31,.31])box([x,.4,0],[.07,.5,.43],'stone');box([0,.2,0],[.62,.055,.4],'teakDark');}
+  else{box([0,.57,0],[.7,.34,.43],tropical?'teak':'stone');box([0,.8,0],[.75,.055,.49],'stone');if(tropical){box([0,.58,.226],[.6,.25,.018],'cane');box([0,.23,0],[.65,.045,.4],'teak');}}
+  soft([-.16,.27,.02],[.24,.09,.25],'linen');soft([.12,.27,.02],[.22,.07,.24],'linen');lathe([0,.87,.02],.185,.13,'ceramic',[[0,-.5],[.55,-.5],[1,.36],[1,.5],[.91,.5],[.56,-.25],[0,-.3]]);rod([.22,.83,-.12],[.22,1.1,-.12],.011,industrial?'metal':'brass');rod([.22,1.1,-.12],[.08,1.1,-.12],.011,industrial?'metal':'brass');arch([0,1.51,-.216],.6,.84,.035,industrial?'light':tropical?'teak':'brass');arch([0,1.51,-.19],.555,.795,.015,'mirror');decor([-.27,.83,.02]);for(const x of[-.4,.4]){rod([x,1.38,-.16],[x,1.72,-.16],.013,industrial?'metal':'bronze');cyl([x,1.7,-.16],.025,.13,'light');}}
+ // Finishes follow the reference's actual material types, not just its colours.
+ begin('ground-finish','Living',industrial?'Microcement ground floor':tropical?'Natural timber living floor':'Honed travertine ground floor');box([-40.05,.008,-4.55],[6.15,.016,8.9],tropical?'teak':'stone');
+ begin('loft-finish','Loft bedroom',industrial?'Ash plank loft floor':'Natural timber loft floor');box([-40.05,2.954,-5.05],[6,.012,4.3],'teak');box([-40.05,2.906,-8.02],[6,.012,1.72],'teak');box([-37.39,2.954,-1.46],[.68,.012,2.35],'teak');
+ if(industrial){begin('living-concrete-wall','Living','Board-jointed concrete feature wall with form-tie details');box([-37.12,1.39,-6.2],[.025,2.73,2.7],'stone');for(const z of[-6.65,-5.75])box([-37.139,1.39,z],[.008,2.71,.008],'teakDark');for(const y of[.6,2.15])for(const z of[-7.15,-6.2,-5.25])part('cylinder',[-37.143,y,z],[.009,.002,.009],'metal',[0,0,Math.PI/2]);}
+ else if(tropical){begin('living-timber-wall','Living','Vertical teak slat wall behind lounge');box([-37.12,1.39,-6.2],[.025,2.73,2.7],'teakDark');for(let j=0;j<28;j++)box([-37.145,1.39,-7.48+j*.095],[.027,2.7,.028],'teak');}
+ begin('living-rug','Living',industrial?'Textured grey living rug':'Natural woven living rug',[-39.85,.023,-6.25],0,true);soft([0,0,0],[3.45,.018,3.3],'rug');
+ begin('living-sofa','Living',industrial?'Low modular L sectional in grey linen':tropical?'Linen sofa with exposed teak frame':'Deep ivory slipcovered sofa',[-37.73,0,-6.15],Math.PI/2,true);
+ if(industrial){box([0,.12,0],[2.65,.12,.83],'metal');for(const x of[-.86,0,.86]){soft([x,.29,0],[.85,.26,.88],'linen');soft([x,.64,.38],[.86,.56,.18],'linen');}soft([-.88,.29,-.52],[.85,.26,.94],'linen');soft([1.32,.46,.02],[.2,.52,.95],'linen');}
+ else{soft([0,.22,0],[2.68,.28,.88],tropical?'teak':'linen');for(const x of[-.87,0,.87]){soft([x,.43,-.02],[.86,.22,.88],'linen');soft([x,.7,.33],[.86,.62,.22],'linen',[-.07,0,0]);}for(const x of[-1.32,1.32])soft([x,.54,0],[.23,.66,.96],tropical?'teak':'linen');}
+ for(const x of[-.95,0,.95])soft([x,.74,.12],[.43,.42,.16],tropical?'olive':x===0?'linen':'boucle',[0,0,x*.17]);
+ begin('living-table','Living',industrial?'Nested concrete tables on tubular black steel rings':tropical?'Low round teak drum coffee table':'Round timber coffee table on twin fluted drums',[-39.55,0,-6.15],0,true);
+ if(industrial){for(const [x,z,r,y]of[[.12,0,.62,.42],[-.45,-.35,.35,.29]]){ring([x,.08,z],r-.09,.013,'metal');for(const a of[0,2.1,4.2])rod([x+Math.cos(a)*(r-.09),.08,z+Math.sin(a)*(r-.09)],[x+Math.cos(a)*(r-.09),y,z+Math.sin(a)*(r-.09)],.012,'metal');cyl([x,y,z],r,.055,'stone');}}
+ else if(tropical){cyl([0,.2,0],.48,.34,'teakDark');cyl([0,.41,0],.71,.07,'teak');}
+ else{for(const x of[-.33,.33]){cyl([x,.2,0],.215,.34,'teak');for(let j=0;j<16;j++){const a=j*Math.PI/8;rod([x+Math.cos(a)*.21,.04,Math.sin(a)*.21],[x+Math.cos(a)*.21,.36,Math.sin(a)*.21],.01,'teak');}}cyl([0,.4,0],.73,.065,'teak');}
+ vase([.17,.46,.02],.12,industrial?'ceramic':'teakDark','bowl');decor([-.22,.46,-.09]);box([.12,.465,-.25],[.27,.025,.2],'linen');
+ if(industrial){chair('living-chair','Living',[-41.15,0,-7.05],-Math.PI/2,true);}else{chair('living-chair-a','Living',[-41.05,0,-7.05],-Math.PI/2,true);chair('living-chair-b','Living',[-40.95,0,-5.25],-Math.PI/2,true);}
+ sideboard('living-console','Living',[-42.78,0,-6.3],1.65,Math.PI/2);shelf('living-shelves','Living',[-42.82,0,-8],Math.PI/2);art('living-art','Living',[-43.04,1.7,-6.2],Math.PI/2);
+ plant('living-plant','Living',[-37.57,0,-8.12],1.95);if(!industrial)plant('living-olive','Living',[-42.55,0,-4.8],1.65);
+ pendant('living-pendant','Living',[-39.45,2.37,-6.2],industrial?.42:tropical?.54:.34);
+ begin('dining-table','Dining',industrial?'Oak dining table on black trestle frame':'Solid timber dining table with softened rectangular top',[-40.3,0,-3.2],0,true);soft([0,.76,0],[1.55,.065,.9],'teak');if(industrial){for(const x of[-.57,.57]){rod([x,.03,-.3],[x,.72,-.3],.025,'metal');rod([x,.03,.3],[x,.72,.3],.025,'metal');rod([x,.13,-.3],[x,.13,.3],.025,'metal');}}else for(const x of[-.59,.59])for(const z of[-.29,.29])rod([x,.02,z],[x,.73,z],.04,'teak');
+ for(const [j,seat]of[[-40.3,0,-4.13],[-40.3,0,-2.27],[-41.43,0,-3.2],[-39.17,0,-3.2]].entries()){const angle=Math.atan2(seat[0]+40.3,seat[2]+3.2);chair('dining-chair-'+j,'Dining',seat,angle);item.facing={position:seat,rotation:angle,target:[-40.3,0,-3.2]};}
+ begin('dining-decor','Dining',industrial?'Slate tray and restrained stoneware':'Hand-thrown pottery and low ceramic bowl',[-40.3,.8,-3.2]);item.parentId='dining-table';vase([.18,0,0],.16,industrial?'ceramic':'teakDark','bowl');decor([-.2,0,-.05]);pendant('dining-pendant','Dining',[-40.3,2.26,-3.2],industrial?.4:tropical?.45:.35);
+ // The source pantry, sink, doors and appliances retain their coordinates.
+ begin('kitchen-fronts','Kitchen',industrial?'Microcement and oak kitchen finish panels':'Fluted teak kitchen end panel',[-37.79,.46,-1.62],Math.PI/2);if(industrial)box([0,0,0],[1.36,.7,.018],'stone');else for(let j=0;j<26;j++)box([-.65+j*.052,0,0],[.024,.7,.018],'teak');
+ begin('kitchen-backsplash','Kitchen','Quartz splashback and discreet warm task strip',[-37.09,1.22,-1.85]);box([0,0,0],[.02,.54,1.63],'stone');box([-.03,.29,0],[.02,.015,1.6],'light');
+ if(industrial){begin('kitchen-track','Kitchen','Black track with three compact cone spot heads',[-37.5,2.63,-1.7]);box([0,0,0],[.04,.035,1.6],'metal');for(const z of[-.53,0,.53])lathe([0,-.1,z],.065,.15,'metal',[[.4,.5],[.65,.2],[1,-.5],[.9,-.5],[.35,.43]]);}
+ else {begin('kitchen-styling','Kitchen','Timber chopping board, small pots and linen',[-37.55,.97,-2.35]);box([0,0,0],[.28,.024,.24],'teak');vase([0,.02,0],.16,'ceramic','bottle');}
+ // Two existing sleeping zones get genuinely rebuilt beds and scheme-specific headwalls.
+ bed('guest-bed','Guest bedroom',[-45.95,0,-3.17],-Math.PI/2);bedWall('guest-headwall','Guest bedroom',[-47.13,.05,-3.17],2.55,Math.PI/2);
+ sideTable('guest-side-a','Guest bedroom',[-46.75,0,-4.42]);sideTable('guest-side-b','Guest bedroom',[-46.75,0,-1.92]);sideboard('guest-storage','Guest bedroom',[-43.59,0,-2.5],1.2,-Math.PI/2);plant('guest-plant','Guest bedroom',[-43.7,0,-4.22],1.2);
+ begin('guest-curtains','Guest bedroom','Full-height soft linen curtains');for(const x of[-46.97,-43.57])for(let j=0;j<5;j++)soft([x+j*.025,1.4,-1.53],[.035,2.65,.045],'linen');
+ bed('loft-bed','Loft bedroom',[-38.35,2.95,-4.88],Math.PI/2);bedWall('loft-headwall','Loft bedroom',[-37.14,2.99,-4.88],2.55,-Math.PI/2);sideTable('loft-side-a','Loft bedroom',[-37.63,2.95,-6.23]);sideTable('loft-side-b','Loft bedroom',[-37.63,2.95,-3.48]);
+ begin('loft-bench','Loft bedroom',industrial?'Steel-framed upholstered bed-end bench':'Low timber bed-end bench with linen pad',[-40.72,2.95,-4.88],Math.PI/2,true);soft([0,.43,0],[1.45,.12,.42],industrial?'boucle':'linen');for(const x of[-.59,.59])for(const z of[-.14,.14])rod([x,.02,z],[x,.4,z],industrial?.014:.032,industrial?'metal':'teak');
+ sideboard('loft-storage','Loft bedroom',[-42.68,2.95,-5.6],1.7,Math.PI/2);chair('loft-chair','Loft bedroom',[-42.08,2.9,-7.75],-.9,true);plant('loft-plant','Loft bedroom',[-40.95,2.95,-6.8],1.3);
+ begin('study-desk','Loft study',industrial?'Oak writing desk on black metal trestles':'Timber writing desk with fluted drawer',[-39.25,2.9,-8.48]);box([0,.74,0],[1.55,.055,.48],'teak');for(const x of[-.64,.64])for(const z of[-.15,.15])rod([x,.02,z],[x,.71,z],industrial?.014:.03,industrial?'metal':'teak');box([-.2,.68,0],[.72,.09,.35],'teakDark');box([-.35,.78,0],[.24,.03,.18],'linen');lamp([.51,.78,0]);chair('study-chair','Loft study',[-39.27,2.9,-7.82],0);
+ if(tropical){begin('ceiling-fan','Loft bedroom','Three-blade timber ceiling fan with dark motor',[-39.45,6.05,-5.0]);rod([0,0,0],[0,.36,0],.018,'metal');cyl([0,0,0],.1,.12,'metal');for(let j=0;j<3;j++){const a=j*Math.PI*2/3;soft([Math.cos(a)*.4,0,Math.sin(a)*.4],[.77,.025,.13],'teak',[0,-a,0]);}}
+ for(const [id,room,p,ry]of[['guest','Guest bathroom',[-46.93,0,-5.98],Math.PI/2],['main','Main bathroom',[-37.51,0,-3.34],-Math.PI/2]]){vanity(id+'-vanity',room,p,ry);begin(id+'-bath-floor',room,industrial?'Microcement bathroom floor':'Light travertine bathroom floor');box(id==='guest'?[-46.24,.027,-6.12]:[-37.89,.027,-3.78],id==='guest'?[1.82,.025,2.23]:[1.58,.025,1.72],'stone');begin(id+'-bath-accessories',room,'Dark towel rail and folded linen',id==='guest'?[-45.36,0,-5.65]:[-38.65,0,-4.02]);rod([0,1.2,-.28],[0,1.2,.28],.012,industrial?'metal':'brass');soft([-.02,1.0,0],[.028,.4,.35],'linen');}
+ begin('terrace-deck','Terrace','Shaded timber deck');box([-42.1,.012,-10],[10.15,.024,1.85],'teak');
+ for(const [j,x]of[-45.8,-38.25].entries()){chair('terrace-chair-'+j,'Terrace',[x,0,-9.9],j?Math.PI/2:-Math.PI/2,true);}
+ begin('terrace-table','Terrace',industrial?'Concrete terrace table':'Timber terrace side table',[-42.05,0,-9.9],0,true);cyl([0,.22,0],.28,.42,industrial?'stone':'teak');vase([0,.44,0],.2,'clay');plant('terrace-plant','Terrace',[-46.95,0,-10.6],1.5);
+ begin('entry-rug','Entry','Natural fibre entrance mat',[-40.05,.026,.38],0,true);box([0,0,0],[1.45,.022,.58],'rug');plant('entry-plant','Entry',[-43.75,0,.35],1.1);
  const rooms=[{id:'living',name:'Living',eye:[-42.25,1.72,-4.4],target:[-39.35,.98,-6.35]},{id:'dining',name:'Dining & kitchen',eye:[-41.65,1.65,-4.55],target:[-38.5,.98,-1.7]},{id:'guest',name:'Guest bedroom',eye:[-43.9,1.65,-4.15],target:[-46.1,1,-3.1]},{id:'bath',name:'Guest bathroom',eye:[-45.75,1.62,-5.65],target:[-46.85,1.16,-6.3],fov:65},{id:'mainbath',name:'Main bathroom',eye:[-38.12,1.6,-3.95],target:[-37.27,1.05,-3.34],fov:65},{id:'entry',name:'Entry',eye:[-40.1,1.7,.5],target:[-40.1,1.1,-4.8]},{id:'loft',name:'Loft suite',eye:[-42.1,4.6,-3.1],target:[-38.7,3.9,-5.1]},{id:'study',name:'Loft study',eye:[-40.6,4.55,-7.9],target:[-38.85,3.8,-8.5]},{id:'terrace',name:'Terrace',eye:[-44.3,1.65,-10.7],target:[-40.2,.6,-9.85]}];
- return {version:'modern-tropical-2-realism',title:'Veil of Light · Modern Tropical',materials,items,rooms,hideOriginalRootIndices:[1,7,14],hideOriginalGltfNodes:[29,513,989],paletteOverrides:{'mmjhfdghd179':'#e9e2cf','mmjhfdghd189':'#7b815f','mmjhfdghd180':'#e9e2cf','mmjhfdghd188':'#cfb993','Unpainted':'#e7ddc9','[Color D01]':'#e7ddc9','[Color D01]1':'#e7ddc9','[Color F07]':'#e7ddc9','[0010_Snow]':'#ece5d6','[0130_Gainsboro]':'#e6ddcc'}};
+ return{version:'catalogue-rebuilt-3',scheme,sourceBoardPage:{earth:19,chalk:20,canopy:21}[scheme],title:'Veil of Light · '+schemeNames[scheme],materials,items,rooms,hideOriginalRootIndices:[0,1,4,7,9,11,14],hideOriginalGltfNodes:[2,29,319,513,723,734,989],paletteOverrides:{'Unpainted':materials.limewash.color,'[Color D01]':materials.limewash.color,'[Color D01]1':materials.limewash.color,'[Color F07]':materials.limewash.color,'[0010_Snow]':materials.limewash.color}};
 }

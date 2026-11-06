@@ -1,4 +1,4 @@
-import {writeFileSync} from 'node:fs';
+import {writeFileSync,mkdirSync} from 'node:fs';
+import {resolve,dirname} from 'node:path';
 import {buildInteriorDesign} from '../dist/interior-design.js';
-writeFileSync(new URL('../interior-spec.json',import.meta.url),JSON.stringify(buildInteriorDesign()));
-console.log('Interior design specification written.');
+const scheme=process.argv[2]||'earth',output=resolve(process.argv[3]||'interior-spec.json');mkdirSync(dirname(output),{recursive:true});writeFileSync(output,JSON.stringify(buildInteriorDesign(scheme)));console.log(scheme+' specification: '+output);

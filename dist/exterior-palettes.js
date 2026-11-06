@@ -177,9 +177,9 @@ export const ambiancePresets={
    8,
    -14
   ],
-  "hemi": 0.65,
-  "environment": 0.9,
-  "exposure": 1.2,
+  "hemi": 0.45,
+  "environment": 0.7,
+  "exposure": 1.12,
   "lamps": 0.12
  },
  "sunset": {
@@ -195,7 +195,7 @@ export const ambiancePresets={
   ],
   "hemi": 0.4,
   "environment": 0.48,
-  "exposure": 1.2,
+  "exposure": 1.12,
   "lamps": 0.65
  },
  "night": {

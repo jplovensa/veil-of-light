@@ -7,6 +7,7 @@ source_hash=hashlib.sha256(args.source.read_bytes()).hexdigest()
 api=C.CDLL(args.sdk)
 class Ref(C.Structure):_fields_=[('ptr',C.c_void_p)]
 class V(C.Structure):_fields_=[('x',C.c_double),('y',C.c_double),('z',C.c_double)]
+class Transform(C.Structure):_fields_=[('values',C.c_double*16)]
 class Color(C.Structure):_fields_=[('r',C.c_ubyte),('g',C.c_ubyte),('b',C.c_ubyte),('a',C.c_ubyte)]
 def call(name,*a):
  r=getattr(api,name)(*a)
@@ -42,7 +43,7 @@ matrefs={}
 for name,props in design['materials'].items():
  mat=ref('SUMaterialCreate');call('SUMaterialSetName',mat,('MT | '+name).encode());col=rgb(props['color']);call('SUMaterialSetColor',mat,C.byref(col));
  if props.get('texture'):
-  tex=Ref();path=texture_png(name,props);photo=Path(__file__).resolve().parents[1]/'dist/assets/realism/teak-color.jpg';path=photo if name in('teak','teakDark') and photo.exists() else path;tile=.4 if props['texture'] in('wood','stone')else .12;call('SUTextureCreateFromFile',C.byref(tex),str(path.resolve()).encode(),C.c_double(tile/.0254),C.c_double(tile/.0254));call('SUMaterialSetTexture',mat,tex)
+  tex=Ref();path=texture_png(name,props);photo=Path(__file__).resolve().parents[1]/'dist/assets/realism/teak-color.jpg';tinted=Path(__file__).resolve().parents[1]/f'dist/assets/surfaces/native/{design["scheme"]}-{name}.jpg';path=tinted if tinted.exists() else photo if name in('teak','teakDark') and photo.exists() else path;tile=.4 if props['texture'] in('wood','stone')else .12;call('SUTextureCreateFromFile',C.byref(tex),str(path.resolve()).encode(),C.c_double(tile/.0254),C.c_double(tile/.0254));call('SUMaterialSetTexture',mat,tex)
  call('SUModelAddMaterials',model,C.c_size_t(1),(Ref*1)(mat));
  if props.get('opacity'):
   call('SUMaterialSetOpacity',mat,C.c_double(props['opacity']));call('SUMaterialSetUseOpacity',mat,C.c_bool(True))
@@ -53,6 +54,9 @@ for mat in refs('SUModelGetMaterials',model):
  if name in design['paletteOverrides']:
   col=rgb(design['paletteOverrides'][name]);call('SUMaterialSetColor',mat,C.byref(col));changed.append(name)
 original=refs('SUEntitiesGetGroups',root)
+door_transforms={}
+for i in [3,6]:
+ t=Transform();call('SUGroupGetTransform',original[i],C.byref(t));door_transforms[i]=list(t.values)
 for i,group in enumerate(original):
  d=api.SUGroupToDrawingElement(group)
  if i in design['hideOriginalRootIndices']:call('SUDrawingElementSetHidden',d,C.c_bool(True))
@@ -70,10 +74,11 @@ def rotate(v,angles):
  y,z=y*math.cos(rx)-z*math.sin(rx),y*math.sin(rx)+z*math.cos(rx)
  return x,y,z
 def shape(part):
- kind=part['shape'];s=part.get('s');verts=[];faces=[];smooth=kind!='box'
- if kind in('vessel','shade'):
-  seg=48
-  if kind=='shade':profile=[(s[0]*math.sin((i+.3)/16.3*math.pi/2),s[1]*math.cos((i+.3)/16.3*math.pi/2))for i in range(17)]
+ kind=part['shape'];s=part.get('s');verts=[];faces=[];smooth=kind not in('box','archPanel')
+ if kind in('vessel','shade','lathe'):
+  seg=32
+  if kind=='lathe':profile=[(r*s[0],y*s[1])for r,y in part['profile']]
+  elif kind=='shade':profile=[(s[0]*math.sin((i+.3)/16.3*math.pi/2),s[1]*math.cos((i+.3)/16.3*math.pi/2))for i in range(17)]
   else:
    outline=[(.48,0),(.7,.04),(.88,.2),(.99,.62),(1,.95),(s[2]/s[0],1),(s[2]/s[0]-.065,1),(.9,.93),(.88,.6),(.75,.22),(.38,.09),(0,.09)] if s[2]/s[0]>.7 else [(0,0),(.5,0),(.7,.04),(.97,.25),(1,.48),(.86,.64),(.48,.79),(.4,.97),(.4,1),(.31,1),(.31,.96),(.4,.8),(.73,.61),(.85,.45),(.73,.22),(.35,.09),(0,.09)]
    profile=[(r*s[0],(y-.5)*s[1])for r,y in outline]
@@ -93,6 +98,20 @@ def shape(part):
     if remap[index] not in seq:seq.append(remap[index])
    if len(seq)>2:filtered.append(seq)
   verts=unique;faces=filtered
+ elif kind=='archPanel':
+  w,h,d=s;radius=w/2;outline=[(-w/2,-h/2),(w/2,-h/2)]+[(math.cos(i*math.pi/16)*radius,h/2-radius+math.sin(i*math.pi/16)*radius)for i in range(17)]
+  for z in[-d/2,d/2]:verts.extend((x,y,z)for x,y in outline)
+  n=len(outline);faces=[list(range(n-1,-1,-1)),list(range(n,2*n))]+[[i,(i+1)%n,(i+1)%n+n,i+n]for i in range(n)]
+ elif kind in('tube','torus'):
+  seg=8
+  if kind=='torus':path=[(s[0]*math.cos(j*math.pi*2/32),0,s[0]*math.sin(j*math.pi*2/32))for j in range(33)];radius=s[1]
+  else:path=part['path'];radius=part['r']
+  for j,point in enumerate(path):
+   a=path[max(0,j-1)];b=path[min(len(path)-1,j+1)];axis=[b[k]-a[k]for k in range(3)];length=math.sqrt(sum(v*v for v in axis));axis=[v/length for v in axis];test=[0,1,0]if abs(axis[1])<.9 else[1,0,0];u=[axis[1]*test[2]-axis[2]*test[1],axis[2]*test[0]-axis[0]*test[2],axis[0]*test[1]-axis[1]*test[0]];length=math.sqrt(sum(v*v for v in u));u=[v/length for v in u];v=[axis[1]*u[2]-axis[2]*u[1],axis[2]*u[0]-axis[0]*u[2],axis[0]*u[1]-axis[1]*u[0]]
+   for i in range(seg):angle=i*math.pi*2/seg;verts.append(tuple(point[k]+radius*(math.cos(angle)*u[k]+math.sin(angle)*v[k])for k in range(3)))
+  for j in range(len(path)-1):
+   for i in range(seg):faces.append([j*seg+i,j*seg+(i+1)%seg,(j+1)*seg+(i+1)%seg,(j+1)*seg+i])
+  if kind=='tube':faces.extend([list(range(seg-1,-1,-1)),list(range((len(path)-1)*seg,len(path)*seg))])
  elif kind=='leaf':
   for j in range(11):
    t=j/10;w=math.sin(math.pi*t)**.8*s[0]/2
@@ -144,9 +163,9 @@ def shape(part):
   faces.append(list(range(seg-1,-1,-1)));faces.append(list(range(seg,seg*2)))
   for i in range(seg):j=(i+1)%seg;faces.append([i,j,j+seg,i+seg])
  else:raise ValueError(kind)
- if kind!='rod':
+ if kind not in('rod','tube'):
   verts=[tuple(rotate(v,part.get('rotation',[0,0,0]))[i]+part['p'][i]for i in range(3))for v in verts]
- if kind not in('leaf','vessel','shade'):
+ if kind not in('leaf','vessel','shade','lathe','tube','torus'):
   center=part.get('p',[(part['a'][i]+part['b'][i])/2 for i in range(3)] if kind=='rod' else [0,0,0])
   for f in faces:
    a,b,c=[verts[i]for i in f[:3]];u=[b[k]-a[k]for k in range(3)];v=[c[k]-a[k]for k in range(3)];normal=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];mid=[sum(verts[i][k]for i in f)/len(f)-center[k]for k in range(3)]
@@ -154,7 +173,7 @@ def shape(part):
  return verts,faces,smooth
 parts=0;facecount=0
 for idx,item in enumerate(design['items']):
- ent=group(root,'MT | '+item['room']+' | '+item['name'])
+ ent=group(root,'MT | '+item['id']+' | '+item['room']+' | '+item['name'])
  for j,part in enumerate(item['parts']):
   dest=group(ent,f'{part["m"]} {j+1}',matrefs[part['m']]);verts,faces,smooth=shape(part);geom=ref('SUGeometryInputCreate')
   points=(V*len(verts))(*[V(x/.0254,-z/.0254,y/.0254)for x,y,z in verts]);call('SUGeometryInputSetVertices',geom,C.c_size_t(len(points)),points)
@@ -170,9 +189,11 @@ for idx,item in enumerate(design['items']):
 args.output.parent.mkdir(parents=True,exist_ok=True);call('SUModelSaveToFile',model,str(args.output.resolve()).encode());call('SUModelRelease',C.byref(model))
 # Reopen the exact saved model and check every native furniture group survived.
 model=Ref();call('SUModelCreateFromFileWithStatus',C.byref(model),str(args.output.resolve()).encode(),C.byref(status));root=ref('SUModelGetEntities',model);groups=refs('SUEntitiesGetGroups',root);names=[string('SUGroupGetName',g)for g in groups];native=[n for n in names if n.startswith('MT |')];assert len(native)==len(design['items']),(len(native),len(design['items']))
+for i,expected in door_transforms.items():
+ t=Transform();call('SUGroupGetTransform',groups[i],C.byref(t));assert all(abs(a-b)<1e-8 for a,b in zip(expected,t.values)),'Door placement changed'
 assert hashlib.sha256(args.source.read_bytes()).hexdigest()==source_hash,'Original source changed unexpectedly.'
 chairs=[i['facing'] for i in design['items'] if 'facing' in i];assert len(chairs)==4
 for f in chairs:
  dx=f['target'][0]-f['position'][0];dz=f['target'][2]-f['position'][2];assert (-math.sin(f['rotation'])*dx-math.cos(f['rotation'])*dz)/math.hypot(dx,dz)>.999
-report={'source_sha256':source_hash,'source_unchanged':True,'dining_chairs_face_table':True,'output':str(args.output.resolve()),'source':args.source.name,'design':design['version'],'items':len(native),'parts':parts,'new_faces':facecount,'rooms':sorted(set(i['room']for i in design['items'])),'palette_overrides':changed,'reopened_successfully':True,'bytes':args.output.stat().st_size,'seconds':round(time.time()-started,1)}
+report={'source_sha256':source_hash,'source_unchanged':True,'source_doors_retained':True,'scheme':design['scheme'],'source_board_page':design['sourceBoardPage'],'dining_chairs_face_table':True,'output':str(args.output.resolve()),'source':args.source.name,'design':design['version'],'items':len(native),'parts':parts,'new_faces':facecount,'rooms':sorted(set(i['room']for i in design['items'])),'palette_overrides':changed,'reopened_successfully':True,'bytes':args.output.stat().st_size,'seconds':round(time.time()-started,1)}
 args.output.with_suffix('.verification.json').write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True);call('SUModelRelease',C.byref(model));api.SUTerminate()

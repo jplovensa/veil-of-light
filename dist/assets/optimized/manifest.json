@@ -1,0 +1,97 @@
+{
+  "shell": {
+    "url": "./assets/optimized/villa-shell.glb",
+    "bytes": 7541812,
+    "sourceRetainedNodes": [
+      1,
+      153,
+      155,
+      346,
+      349,
+      517,
+      727,
+      764,
+      771,
+      1019,
+      1021,
+      1023,
+      1030,
+      1032,
+      1056,
+      1262,
+      1272,
+      1274
+    ],
+    "removedOldFurnitureNodes": [
+      2,
+      29,
+      319,
+      513,
+      723,
+      734,
+      989
+    ],
+    "boundsBefore": {
+      "min": [
+        -47.45000027467928,
+        -0.20000000152587907,
+        -11.099999987792968
+      ],
+      "max": [
+        -36.549999997732264,
+        7.686107174682622,
+        0.7399999862670895
+      ]
+    },
+    "boundsAfter": {
+      "min": [
+        -47.45012898425679,
+        -0.2001064572409812,
+        -11.10002433040431
+      ],
+      "max": [
+        -36.549999997732264,
+        7.686179375469131,
+        0.7401025456564607
+      ]
+    }
+  },
+  "schemes": {
+    "earth": {
+      "scheme": "earth",
+      "nativeFile": "Veil of Light - Mediterranean.skp",
+      "nativeSHA256": "c36a770279e4ffc48c8c0ff67383930b591ff47532ed6914c5bf437170983b5c",
+      "nativeVerified": true,
+      "furnitureGroups": 53,
+      "renderGroups": 38,
+      "triangles": 81456,
+      "bytes": 903080,
+      "materials": 19,
+      "url": "./assets/optimized/earth.glb"
+    },
+    "chalk": {
+      "scheme": "chalk",
+      "nativeFile": "Veil of Light - Concrete Industrial.skp",
+      "nativeSHA256": "99958b3ec3d96d5945f50f140200a9d07b899e7fa09a94cdc00790fb822964fb",
+      "nativeVerified": true,
+      "furnitureGroups": 52,
+      "renderGroups": 36,
+      "triangles": 77444,
+      "bytes": 863824,
+      "materials": 19,
+      "url": "./assets/optimized/chalk.glb"
+    },
+    "canopy": {
+      "scheme": "canopy",
+      "nativeFile": "Veil of Light - Modern Tropical.skp",
+      "nativeSHA256": "6be2720f8750301e936c5cd263a732bc14b03dc2678209a1e4e5358e2b7314cc",
+      "nativeVerified": true,
+      "furnitureGroups": 55,
+      "renderGroups": 38,
+      "triangles": 76536,
+      "bytes": 883184,
+      "materials": 19,
+      "url": "./assets/optimized/canopy.glb"
+    }
+  }
+}

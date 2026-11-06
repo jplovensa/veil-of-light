@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {exteriorPalettes} from './exterior-palettes.js?v=exterior-1';
+import {exteriorPalettes} from './exterior-palettes.js?v=native-5';
 function surfaceTexture(type){
  const c=document.createElement('canvas');c.width=c.height=512;const ctx=c.getContext('2d');let seed=91;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
  ctx.fillStyle='#d1cbc0';ctx.fillRect(0,0,512,512);
@@ -22,14 +22,14 @@ export function installExterior(model,palette){
  if(!ids[1].length&&!ids[2].length)return;g.setIndex([...ids[0],...ids[1],...ids[2]]);g.clearGroups();let start=0;ids.forEach((list,i)=>{if(list.length)g.addGroup(start,list.length,i);start+=list.length;});o.geometry=g;o.material=[m,wall,stone];
  });
  finishes.push(wall,stone,paving);
- return {materials:finishes,apply(id){const theme=exteriorPalettes.find(p=>p.id===id)||exteriorPalettes[0];wall.color.set(theme.wall);stone.color.set(theme.stone);paving.color.set(theme.paving);for(const roof of roofs){roof.color.set(theme.roof);roof.map=roofMaps[theme.roofType];roof.bumpMap=roof.map;roof.needsUpdate=true;}for(const frame of frames)frame.color.set(theme.frame);return theme;}};
+ return {materials:finishes,enhance(p){for(const [m,source]of [[wall,p.limewash],[stone,p.stone]]){for(const key of ['map','normalMap','roughnessMap','bumpMap'])m[key]=source[key];m.normalScale.copy(source.normalScale);m.needsUpdate=true;}},apply(id){const theme=exteriorPalettes.find(p=>p.id===id)||exteriorPalettes[0];wall.color.set(theme.wall);stone.color.set(theme.stone);paving.color.set(theme.paving);for(const roof of roofs){roof.color.set(theme.roof);roof.map=roofMaps[theme.roofType];roof.bumpMap=roof.map;roof.needsUpdate=true;}for(const frame of frames)frame.color.set(theme.frame);return theme;}};
 }
 export function addPracticalLighting(scene){
  const root=new THREE.Group();root.name='Layered architectural lighting';const lamps=[];const warm=new THREE.MeshStandardMaterial({color:'#ead5ac',emissive:'#ffd598',emissiveIntensity:1.5,roughness:.6});const metal=new THREE.MeshStandardMaterial({color:'#272f29',roughness:.7,metalness:.5});
  const point=(p,power,distance=5)=>{const l=new THREE.PointLight('#ffd09a',power,distance,2);l.position.fromArray(p);l.userData.baseIntensity=power;root.add(l);lamps.push(l);};
- for(const p of[[-39.45,2.25,-6.2],[-40.3,2.1,-3.2],[-38.6,4.9,-5]])point(p,12,6);
- for(const p of[[-46.72,1.14,-4.34],[-46.72,1.14,-1.98],[-37.62,4.1,-6.2],[-37.62,4.1,-3.48],[-37.5,1.7,-1.5]])point(p,4,3.5);
- for(const [x,z,dir]of[[-36.78,-2.25,-1],[-36.78,-7,-1],[-47.52,-3.4,1],[-47.52,-6.4,1]]){const fixture=new THREE.Mesh(new THREE.BoxGeometry(.1,.28,.15),metal);fixture.position.set(x,1.85,z);root.add(fixture);for(const dy of[-1,1]){const bulb=new THREE.Mesh(new THREE.BoxGeometry(.07,.01,.11),warm);bulb.position.set(x,1.85+dy*.14,z);root.add(bulb);const spot=new THREE.SpotLight('#ffce90',22,4,.65,.65,2);spot.position.set(x-dir*.08,1.85+dy*.12,z);spot.target.position.set(x+dir*.19,1.85+dy*1.45,z);root.add(spot,spot.target);spot.userData.baseIntensity=22;lamps.push(spot);}}
+ for(const p of[[-39.45,2.25,-6.2],[-40.3,2.1,-3.2],[-38.6,4.9,-5]])point(p,5.5,6);
+ for(const p of[[-46.72,1.14,-4.34],[-46.72,1.14,-1.98],[-37.62,4.1,-6.2],[-37.62,4.1,-3.48],[-37.5,1.7,-1.5]])point(p,1.8,3.5);
+ for(const [x,z,dir]of[[-36.78,-2.25,-1],[-36.78,-7,-1],[-47.52,-3.4,1],[-47.52,-6.4,1]]){const fixture=new THREE.Mesh(new THREE.BoxGeometry(.1,.28,.15),metal);fixture.position.set(x,1.85,z);root.add(fixture);for(const dy of[-1,1]){const bulb=new THREE.Mesh(new THREE.BoxGeometry(.07,.01,.11),warm);bulb.position.set(x,1.85+dy*.14,z);root.add(bulb);const spot=new THREE.SpotLight('#ffce90',9,4,.65,.65,2);spot.position.set(x-dir*.08,1.85+dy*.12,z);spot.target.position.set(x+dir*.19,1.85+dy*1.45,z);root.add(spot,spot.target);spot.userData.baseIntensity=9;lamps.push(spot);}}
  for(const x of[-46,-42.2,-38.4]){const fixture=new THREE.Mesh(new THREE.BoxGeometry(.08,.45,.08),metal);fixture.position.set(x,.12,.65);root.add(fixture);const lens=new THREE.Mesh(new THREE.BoxGeometry(.065,.05,.065),warm);lens.position.set(x,.32,.65);root.add(lens);point([x,.34,.65],2.4,2.6);}
  scene.add(root);return {root,materials:[warm,metal],setIntensity(value){for(const l of lamps)l.intensity=l.userData.baseIntensity*value;warm.emissiveIntensity=value*2;},lamps};
 }

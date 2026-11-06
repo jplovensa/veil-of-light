@@ -28,7 +28,7 @@ for idx,e in enumerate(data['exteriorPalettes']):
   p=OUT/f"{e['id']}-{key}.jpg";x=40+j*548
   # Browser captures are retained as evidence; crop only for the document layout.
   im=Image.open(p)
-  if im.width>800:im=im.crop((0,105,min(680,im.width),min(570 if key=='interior' else 650,im.height)))
+  if im.width>800:im=im.crop((230 if key=='interior' else 180,120,min(945,im.width),min(535 if key=='interior' else 590,im.height)))
   crop=OUT/f"{e['id']}-{key}-crop.jpg";im.convert('RGB').save(crop,quality=93)
   imgfill(c,crop,x,390,524,245);text(c,x,371,'APPLIED TO ORIGINAL SKP / '+('EXTERIOR' if key=='model' else 'INTERIOR'),8,'InterBold',muted)
  text(c,40,337,'EXTERIOR FINISH SCHEDULE',10,'InterBold');text(c,588,337,'INTERIOR FINISH SCHEDULE',10,'InterBold')

@@ -1,63 +1,35 @@
 # Veil of Light · Fjäll Group
 
-[Open the modern tropical villa](https://jplovensa.github.io/veil-of-light/)
+[Explore the villa](https://jplovensa.github.io/veil-of-light/)
 
-A Three.js walkthrough of the supplied villa SketchUp model, furnished in a modern tropical palette: warm limewash, teak, woven cane, linen, travertine, olive accents, and tropical planting.
+An interactive Three.js villa based on the supplied SketchUp architecture and the original To Breathe catalogue moodboards: Mediterranean (page 19), Concrete Industrial (page 20), and Modern Tropical (page 21). Each scheme has separately rebuilt furniture, joinery features and decor across ten spaces. Sofas, chairs, tables, pendants, beds, vanities and shelving change in form and construction as well as colour.
 
-The full interior covers living, dining, kitchen, guest bedroom, guest bathroom, main bathroom, loft bedroom, loft study, entry, and rear terrace. Existing beds, sanitary fittings, appliances, arches, glazing, and the spiral stair are retained. The lounge seating is redesigned; original bathroom doors, door hardware and kitchen joinery are retained at their source transforms. Detached source-model objects are hidden. All four dining chairs face the table centre.
+Source bathroom door assemblies, hardware, built-in kitchen, sanitary fittings, glazing, arches and stair remain at their original positions. Original loose furniture is replaced. Four dining chairs face the table. These are coordinated visual design studies; source accuracy does not establish fabrication dimensions or product specifications.
 
-## Explore
+## Explore and edit
 
-Choose a room from **Explore a space**, then click to look around. Use WASD / arrow keys to walk, Shift to move faster, Q / E to change level, and Esc to pause. Pointer-lock browsers support mouse look; other browsers support dragging.
+Choose a space for an interior view. Orbit, floor plan, adjustable cutaway and walk modes are available. In walk mode use WASD, Shift for speed, Q/E for elevation and Esc to release the mouse. Elevation is manual; collision uses forward ray tests.
 
-**Orbit** shows the whole villa. **Floor plan** and the adjustable cutaway reveal the layout. In floor-plan mode, double-click a floor to start walking there. **Moodboard** opens the material and atmosphere direction. Textures, site grid, snapshots, and fullscreen are available.
+Choose a design scheme, then Daylight, Golden hour or Blue hour. Lamp brightness and on/off are independent. Open Moodboard to inspect the original proposal boards and finish schedules. Inter fonts and the transparent Fjäll Group logo are bundled.
 
-Desktop keyboard and mouse are recommended. Collision uses a forward ray test. Elevation is manual; this is an architectural explorer with no gravity or automatic stair climbing.
+Enable Move furniture under Furniture layout to drag pieces in plan, choose items, move by 15 cm or rotate by 15 degrees. Undo and reset controls are available. Each scheme saves a separate layout on the current device. Downloaded JSON records the layout; browser edits do not overwrite the SKP. Room bounds and door/stair exclusion zones assist layout planning and do not replace a detailed clearance review.
 
+## Native SketchUp and lightweight delivery
 
-## Catalogue design schemes and layout editing
+The builder saves three independent SKP copies, reopens each through the SketchUp C API, verifies retained source-door transforms, and preserves the original file checksum. Named native furniture groups are exported from those exact saved files into separate GLBs. The optimized manifest records each native source checksum. The large editable SKP files are delivered locally and are not stored in this repository.
 
-The viewer now applies the supplied **To Breathe - FG Signature Catalogue** boards for Veil of Light: Mediterranean (p. 19), Concrete Industrial (p. 20), and Modern Tropical (p. 21). Original board artwork is included in the Moodboard dialog. Exterior finishes use the catalogue’s warm beige / terracotta sheet (p. 15) or white / charcoal sheet (p. 18). The architectural geometry, door assemblies and built-in kitchen joinery stay at their original source positions. The PDF combines each original moodboard with an applied interior / exterior finish schedule.
+The browser downloads an optimized architectural shell and one interior at a time. Other schemes load when selected and the previous geometry is disposed. Meshopt compression, batched shell meshes, small shared texture maps, a 256 × 128 captured daylight environment and rendering only when the view changes keep the experience lighter. Photographed wood, fabric and mineral surface colour, normal and roughness maps provide material detail. Sun shadows and warm practical lights remain; heavy screen-space post-processing is omitted.
 
-Select a **Design scheme** to coordinate exterior stucco, roof, stone, metalwork, interior walls, timber, upholstery, accents and pendant finishes. Switch **Daylight**, **Golden hour**, or **Blue hour**; practical lamps and exterior lighting have their own on/off switch and level control. Lighting is illustrative, without a photometric specification.
+The initial screen is a small static preview. It appears before the 3D libraries load and includes a bounded loading watchdog, download timeouts, retry, and access to original moodboards if startup fails. WebGL context loss shows recovery instead of an endless loader. This improves resilience; browser/GPU failures cannot be ruled out entirely.
 
-Open **Furniture layout** and enable **Move furniture**. Drag a piece in the cutaway plan, or choose it from the list and use 15 cm movement / 15 degree rotation controls. Original beds are included. Undo, reset one piece, reset the whole layout and download a JSON layout are available. Changes save on the current device; they do not overwrite the SketchUp file. Simple room bounds and door / stair exclusion zones help retain access; this does not replace a coordinated clearance review.
+## Local preview and checks
 
-`node tools/validate-experience.mjs` verifies the three catalogue schemes, 42 finish entries, lighting presets, bundled boards/PDF and original architectural-export checksum.
+Run `python3 -m http.server 8765 --directory dist`, then open http://localhost:8765.
 
-## Local preview
+Run `node tools/validate-interior.mjs` and `node tools/validate-experience.mjs`. These check all three schemes, ten spaces, inward dining-chair directions, finite geometry, original architecture checksum, reference boards and release payload budgets.
 
-Run `python3 -m http.server 8765 --directory dist` and open http://localhost:8765.
+On macOS with SketchUp 2025 installed, `python3 tools/build-native-schemes.py /path/to/original.skp /path/to/output` builds, reopens and exports the three native schemes. `node tools/optimize-viewer-models.mjs` compresses the browser models; build-time dependencies are documented in that file. `node tools/prepare-lightweight-surfaces.mjs` downsamples the captured environment. Deployment checks source modules and publishes `dist/` to GitHub Pages.
 
-All libraries, fonts, model assets, and the moodboard are bundled locally. The original geometry is in `dist/assets/villa.gltf`; `dist/interior-design.js` defines the shared furnishing geometry and placement. `dist/interior.js` renders those same design parts with photographed PBR materials, soft upholstery geometry, woven chair backs, shaped ceramics, and merged room geometry.
+## Credits
 
-## Material and lighting refinement
-
-Teak, ivory linen and limewash use bundled diffuse, normal and roughness maps. HDR environment lighting, warm directional daylight, contact shadows and edge smoothing give the furniture a more grounded appearance. The shared design includes sculpted teak/cane chairs, rounded seat cushions, curved foliage and hollow lathed ceramics. The live viewer remains a real-time Three.js scene.
-
-## Editable SketchUp output
-
-The native interior builder creates named editable furniture and finish groups in a **new copy** of the original SketchUp file. It uses the same design specification as the live walkthrough, applies matching material colours and generated surface textures, and saves a verification report after reopening the exact output file. The source SKP is unchanged.
-
-On macOS with SketchUp 2025 installed:
-
-```sh
-node tools/write-interior-spec.mjs
-python3 tools/build_sketchup_interior.py /path/to/original.skp /path/to/Veil-of-Light-Modern-Tropical.skp
-```
-
-Use `--sdk` to specify another SketchUp C API library. The original and generated SKP files are not included in this repository. The local delivery contains the editable SKP and its verification report.
-
-The older `convert_skp.py` / `package_model.py` tools regenerate the original shell export. The newer furnishing layer is rendered from the shared design specification.
-
-## Checks and deployment
-
-`node tools/validate-interior.mjs` checks the ten spaces, material references, finite geometry coordinates, and inward dining-chair directions. GitHub Actions checks the viewer and interior modules, then deploys `dist/` to GitHub Pages after every push to `main`.
-
-## Moodboard and credits
-
-The moodboard is an AI-generated atmosphere and material reference, created with the built-in image-generation tool. It is not an exact render of the villa. Its production prompt is in `docs/moodboard-prompt.txt`.
-
-The bundled teak veneer, rough linen, plastered wall and Kiara Interior HDR environment are CC0 assets from [Poly Haven](https://polyhaven.com/). Exact source URLs and authors are recorded in `dist/assets/realism/credits.json`. Run `python3 tools/fetch-realism-assets.py` to retrieve the source maps and rendering addons.
-
-Three.js is distributed under the MIT License and Inter under the SIL Open Font License; their notices are in `dist/vendor/`. The Fjäll Group logo, villa design, and source model retain their respective owners' rights. No additional reuse licence is granted for the villa or branding by this repository.
+Original architecture, catalogue boards and Fjäll identity were supplied by the user. Photograph-based CC0 material and HDR environment credits are in `dist/assets/realism/credits.json`. Three.js and meshoptimizer license notices are retained with the bundled libraries. An older generated atmosphere image is retained as an archive; the active Moodboard dialog uses original proposal pages.
