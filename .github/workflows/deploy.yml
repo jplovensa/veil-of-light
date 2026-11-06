@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -18,6 +18,30 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
+      - name: Install reviewed viewer and model bundles
+        run: |
+          sha256sum -c <<'CHECKSUMS'
+          3f22656dcba27dd6428d03b7794c6d2cdb16d31c353bee77887faec63f3c3ca4  veil-sky-models.zip
+          bd835a69d444a5df0228ee06849a7f9f2e7152a26574182e86ba048b3cec8801  veil-sky-viewer.zip
+          CHECKSUMS
+          python3 - <<'PYCODE'
+          import zipfile
+          from pathlib import PurePosixPath
+          for name in ['veil-sky-models.zip', 'veil-sky-viewer.zip']:
+              with zipfile.ZipFile(name) as z:
+                  for entry in z.infolist():
+                      p=PurePosixPath(entry.filename)
+                      assert not p.is_absolute() and '..' not in p.parts
+                      assert p.parts[0] in ('dist','tools','docs','README.md')
+                      assert entry.external_attr >> 16 & 0o170000 != 0o120000
+                  z.extractall('.')
+          PYCODE
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add dist tools docs README.md
+          git rm -- veil-sky-models.zip veil-sky-viewer.zip
+          git commit -m 'Refine villa with reference beds, clear sofa placement and opening glass facades'
+          git push
       - name: Check viewer JavaScript
         run: |
           node --check dist/startup.js
@@ -31,6 +55,7 @@ jobs:
           node --check dist/catalogue-materials.js
           node --check dist/bedside-lighting.js
           node --check dist/doors.js
+          node --check dist/layout-clearance.js
           node tools/validate-interior.mjs
           node tools/validate-experience.mjs
       - name: Prepare source-floor checks
