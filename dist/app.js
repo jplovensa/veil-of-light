@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {createCatalogueMaterials} from './catalogue-materials.js?v=soft-sofa-9-release';
-import {createRenderSystem,defaultQuality} from './render-quality.js?v=soft-sofa-9-release';
+import {createRenderSystem,defaultQuality} from './render-quality.js?v=mobile-joystick-10';
 import {createBedsideLighting} from './bedside-lighting.js?v=soft-sofa-9-release';
 import {createDoorSystem} from './doors.js?v=soft-sofa-9-release';
 import {OrbitControls} from 'three/addons/OrbitControls.js';
@@ -11,7 +11,10 @@ import {MeshoptDecoder} from './vendor/meshopt_decoder.mjs';
 import {installExterior,addPracticalLighting} from './exterior.js?v=soft-sofa-9-release';
 import {exteriorPalettes,ambiancePresets} from './exterior-palettes.js?v=soft-sofa-9-release';
 import {createFurnitureEditor} from './furniture-editor.js?v=soft-sofa-9-release';
+import {createTouchNavigation, compactViewport} from './touch-navigation.js?v=mobile-joystick-10';
 const $=s=>document.querySelector(s), host=$('#viewport');
+const coarsePointer=matchMedia('(pointer: coarse)');
+const usesTouchControls=()=>compactViewport.matches||coarsePointer.matches;
 const scene=new THREE.Scene();scene.background=new THREE.Color('#dce0d2');scene.fog=new THREE.FogExp2('#dce0d2',.011);
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:false,powerPreference:defaultQuality()==='refined'?'high-performance':'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<700?1:1.25));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;renderer.localClippingEnabled=true;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;host.appendChild(renderer.domElement);
 const hemisphere=new THREE.HemisphereLight(0xe6edeb,0xb09a78,.65);scene.add(hemisphere);const sun=new THREE.DirectionalLight(0xffe6c2,3.6);sun.position.set(-25,8,-14);sun.target.position.set(-40,0,-6.5);sun.castShadow=true;sun.shadow.mapSize.set(defaultQuality()==='refined'?2048:1024,defaultQuality()==='refined'?2048:1024);Object.assign(sun.shadow.camera,{left:-10,right:10,top:10,bottom:-10,near:.5,far:65});sun.shadow.bias=-.00015;sun.shadow.normalBias=.012;sun.shadow.radius=3;scene.add(sun,sun.target);const fill=new THREE.DirectionalLight(0xdde9e7,.45);fill.position.set(-33.7,8,-17.3);fill.target.position.set(-41.7,0,-5.3);scene.add(fill,fill.target);
@@ -21,7 +24,7 @@ let controls=new OrbitControls(camera,renderer.domElement);controls.enableDampin
 const requestedScheme=new URLSearchParams(location.search).get('scheme'),desiredScheme=({tropical:'canopy',mediterranean:'earth',industrial:'chalk',canopy:'canopy',earth:'earth',chalk:'chalk'})[requestedScheme]||'canopy';
 let exterior,practicals,furnitureEditor,garden,ambiance='day',currentScheme=desiredScheme,schemeBusy=false,tourTimer,tourIndex=0;
 let interior,model,box,center,size,fitSize,extent,mode='orbit',meta,grid,meshes=[],materials=new Map(),heightBase=0,walkY=0;let ready=false;
-const clip=new THREE.Plane(new THREE.Vector3(0,-1,0),1000),raycaster=new THREE.Raycaster(),keys=new Set(),pointer=new THREE.Vector2(),clock=new THREE.Clock();let yaw=0,pitch=0,locked=false,walkActive=false,dragging=false,lastX=0,lastY=0;renderer.domElement.tabIndex=0;
+const clip=new THREE.Plane(new THREE.Vector3(0,-1,0),1000),raycaster=new THREE.Raycaster(),keys=new Set(),pointer=new THREE.Vector2(),clock=new THREE.Clock();let yaw=0,pitch=0,locked=false,walkActive=false;renderer.domElement.tabIndex=0;
 const materialKit=createCatalogueMaterials(renderer,()=>dirty=true),renderSystem=createRenderSystem(renderer,scene,camera,()=>{dirty=true;renderer.shadowMap.needsUpdate=true;}),bedside=createBedsideLighting(scene,{canvas:renderer.domElement,onChange:()=>{dirty=true;renderer.shadowMap.needsUpdate=true;},isWalk:()=>mode==='walk'?camera:null,refined:()=>renderSystem.quality==='refined'}),doors=createDoorSystem(scene,{canvas:renderer.domElement,onChange:()=>{dirty=true;renderer.shadowMap.needsUpdate=true;},getCamera:()=>camera,getMode:()=>mode});
 const decoderLoader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder),downloads=new Map();
 async function loadModel(url){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);try{const response=await fetch(url,{signal:controller.signal,cache:'no-cache'});if(!response.ok)throw new Error('Model download unavailable');const total=Number(response.headers.get('content-length'))||0;let data;if(response.body?.getReader){const reader=response.body.getReader(),chunks=[];let loaded=0;while(true){const part=await reader.read();if(part.done)break;chunks.push(part.value);loaded+=part.value.byteLength;downloads.set(url,loaded);window.villaBoot?.progress('Loading villa',Math.min(.78,.12+loaded/Math.max(total,loaded)*.6));}const bytes=new Uint8Array(loaded);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}data=bytes.buffer;}else{data=await response.arrayBuffer();downloads.set(url,data.byteLength);}return await decoderLoader.parseAsync(data,'./assets/optimized/');}finally{clearTimeout(timer);}}
@@ -30,14 +33,32 @@ function suppressTextures(){if($('#textures').checked)return;for(const[m,state]o
 function registerMaterials(){const old=new Map(materials);materials.clear();meshes=[];const remember=m=>{let state=old.get(m);if(!state||$('#textures').checked)state={...Object.fromEntries(textureKeys.map(k=>[k,m[k]])),color:m.color.clone()};else{for(const k of textureKeys)if(m[k])state[k]=m[k];if(m.color.getHexString()!=='d9d8cd')state.color.copy(m.color);}materials.set(m,state);};model.updateMatrixWorld(true);model.traverse(o=>{if(o.isMesh&&visibleInTree(o)){meshes.push(o);for(const mat of Array.isArray(o.material)?o.material:[o.material])if(!materials.has(mat))remember(mat);}});for(const mat of [...(exterior?.materials||[]),...(practicals?.materials||[])])if(!materials.has(mat))remember(mat);suppressTextures();}
 function makeEditor(){furnitureEditor=createFurnitureEditor({scene,renderer,getCamera:()=>activeCamera,controls,interior,onEnable:()=>{changeMode('plan');$('#cutaway').checked=true;$('#height').value=2.6;applyCutaway();},onChange:()=>{renderer.shadowMap.needsUpdate=true;dirty=true;updateSection();},filterHit:validHit,onSelect:g=>{$('#height').value=(g.userData.room.startsWith('Loft')||g.userData.room==='Balcony')?5.8:2.6;applyCutaway();}});}
 function visibleInTree(o){for(let a=o;a;a=a.parent)if(!a.visible)return false;return true;}
-function orbitView(){activeCamera=camera;controls.object=camera;controls.enableRotate=true;controls.maxPolarAngle=Math.PI*.49;camera.up.set(0,1,0);camera.position.copy(center).add(new THREE.Vector3(fitSize.x*.95,extent*.8,fitSize.z*1.1));controls.target.copy(center);camera.lookAt(controls.target);controls.update();}
-function resize(){renderSystem.resize();dirty=true;camera.aspect=innerWidth/innerHeight;camera.setViewOffset(innerWidth,innerHeight,innerWidth>650?-125:-60,0,innerWidth,innerHeight);camera.updateProjectionMatrix();if(size){const s=Math.max(fitSize.x/(innerWidth/innerHeight),fitSize.z)*.85;planCamera.left=-s*innerWidth/innerHeight;planCamera.right=-planCamera.left;planCamera.top=s;planCamera.bottom=-s;planCamera.setViewOffset(innerWidth,innerHeight,innerWidth>650?-125:-60,0,innerWidth,innerHeight);planCamera.updateProjectionMatrix();}}
-function changeMode(next){if(!ready)return;const previousMode=mode,selectedRoom=$('#room-view').value;if(furnitureEditor?.enabled)furnitureEditor.setEnabled(false);if(document.pointerLockElement)document.exitPointerLock();keys.clear();walkActive=false;mode=next;$('#status').textContent='Veil of Light · ready';controls.enabled=next!=='walk';$('#walk-overlay').hidden=next!=='walk';$('#crosshair').hidden=true;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));
+function framePortrait(target) {
+ if (!compactViewport.matches || camera.aspect>=.85) return;
+ const distanceScale=Math.min(1.8,.85/camera.aspect);
+ camera.position.sub(target).multiplyScalar(distanceScale).add(target);
+}
+function orbitView(){activeCamera=camera;controls.object=camera;controls.enableRotate=true;controls.maxPolarAngle=Math.PI*.49;camera.up.set(0,1,0);camera.position.copy(center).add(new THREE.Vector3(fitSize.x*.95,extent*.8,fitSize.z*1.1));controls.target.copy(center);framePortrait(controls.target);camera.lookAt(controls.target);controls.update();}
+function resize(){
+ renderSystem.resize();
+ dirty=true;
+ const aspect=innerWidth/innerHeight;
+ const offset=compactViewport.matches?0:-125;
+ camera.setViewOffset(innerWidth,innerHeight,offset,0,innerWidth,innerHeight);
+ if(size){
+  const span=Math.max(fitSize.x/aspect,fitSize.z)*.85;
+  planCamera.left=-span*aspect;
+  planCamera.right=-planCamera.left;
+  planCamera.top=span;
+  planCamera.bottom=-span;
+  planCamera.setViewOffset(innerWidth,innerHeight,offset,0,innerWidth,innerHeight);
+ }
+}
+function changeMode(next){if(!ready)return;const previousMode=mode,selectedRoom=$('#room-view').value;if(furnitureEditor?.enabled)furnitureEditor.setEnabled(false);if(document.pointerLockElement)document.exitPointerLock();resetWalkInput();walkActive=false;mode=next;$('#status').textContent='Veil of Light · ready';controls.enabled=next!=='walk';document.querySelectorAll('[data-mode]').forEach(b=>{b.classList.toggle('active',b.dataset.mode===next);b.setAttribute('aria-pressed',String(b.dataset.mode===next));});
  if(next==='orbit'){$('#room-view').value='overview';camera.fov=48;resize();orbitView();$('#hint').innerHTML='Drag to orbit <b>·</b> Scroll to zoom <b>·</b> Double-click to focus';updateRoomUI('exterior');}
  if(next==='plan'){$('#room-view').value='overview';activeCamera=planCamera;controls.object=planCamera;controls.enableRotate=false;planCamera.position.set(center.x,box.max.y+extent*2,center.z);controls.target.copy(center);planCamera.zoom=1;resize();planCamera.lookAt(center);controls.update();$('#cutaway').checked=true;$('#height').value=box.min.y+Math.min(size.y*.35,2.6);applyCutaway();$('#hint').innerHTML='Drag to pan <b>·</b> Scroll to zoom <b>·</b> Double-click a floor to walk there';}
- if(next==='walk'){const room=interior.design.rooms.find(r=>r.id===selectedRoom)||interior.design.rooms[0];camera.fov=48;camera.setViewOffset(innerWidth,innerHeight,innerWidth>650?-125:-60,0,innerWidth,innerHeight);activeCamera=camera;controls.object=camera;if(previousMode==='plan'||!interior.design.rooms.some(r=>r.id===selectedRoom)){camera.position.fromArray(room.eye);camera.lookAt(new THREE.Vector3().fromArray(room.target));}camera.up.set(0,1,0);$('#cutaway').checked=false;applyCutaway();const direction=new THREE.Vector3();camera.getWorldDirection(direction);yaw=Math.atan2(-direction.x,-direction.z);pitch=Math.asin(THREE.MathUtils.clamp(direction.y,-.95,.95));walkY=camera.position.y;$('#room-view').value=room.id;updateRoomUI(room.id);$('#hint').innerHTML='W A S D / arrows move · Shift faster · Q / E change level · F door';}
- $('#touch-controls').hidden=next!=='walk'||!matchMedia('(pointer:coarse)').matches;
-
+ if(next==='walk'){const room=interior.design.rooms.find(r=>r.id===selectedRoom)||interior.design.rooms[0];camera.fov=48;activeCamera=camera;controls.object=camera;resize();if(previousMode==='plan'||!interior.design.rooms.some(r=>r.id===selectedRoom)){camera.position.fromArray(room.eye);camera.lookAt(new THREE.Vector3().fromArray(room.target));}camera.up.set(0,1,0);$('#cutaway').checked=false;applyCutaway();const direction=new THREE.Vector3();camera.getWorldDirection(direction);yaw=Math.atan2(-direction.x,-direction.z);pitch=Math.asin(THREE.MathUtils.clamp(direction.y,-.95,.95));walkY=camera.position.y;$('#room-view').value=room.id;updateRoomUI(room.id);$('#hint').innerHTML='W A S D / arrows move · Shift faster · Q / E change level · F door';}
+ syncWalkUI();
 }
 function applyCutaway(){const enabled=$('#cutaway').checked;$('#cut-controls').hidden=!enabled;clip.constant=Number($('#height').value);$('#height-label').value=`${(clip.constant-box.min.y).toFixed(2)} m`;for(const [m]of materials){m.clippingPlanes=enabled?[clip]:[];m.clipShadows=true;m.needsUpdate=true;}dirty=true;renderer.shadowMap.needsUpdate=true;updateSection();}
 let sectionLines,sectionTimer;
@@ -78,29 +99,157 @@ async function load(){const start=performance.now();try{window.villaBoot?.progre
 
 load();
 function updateSchemeUI(id){const theme=exteriorPalettes.find(t=>t.id===id);$('#finish-caption').textContent=theme.subtitle;$('#exterior-name').textContent=theme.name;$('#model-detail').textContent=interior.design.items.length+' native furniture and finish groups';$('#board-thumbnail').src=theme.image;$('#board-card-label').innerHTML=theme.name+' <i>View moodboard ↗</i>';document.title='Veil of Light — '+theme.name;}
-function buildRoomButtons(){const rooms=[{id:'exterior',name:'Whole villa'},...interior.design.rooms];$('#rooms').replaceChildren();rooms.forEach((room,i)=>{const b=document.createElement('button');b.dataset.room=room.id;b.innerHTML=String(i+1).padStart(2,'0')+' <span>'+room.name+'</span><i>↗</i>';b.onclick=()=>goRoom(room.id);$('#rooms').append(b);});}
+function buildRoomButtons(){const rooms=[{id:'exterior',name:'Whole villa'},...interior.design.rooms];$('#rooms').replaceChildren();rooms.forEach((room,i)=>{const b=document.createElement('button');b.dataset.room=room.id;b.innerHTML=String(i+1).padStart(2,'0')+' <span>'+room.name+'</span><i>↗</i>';b.onclick=()=>{goRoom(room.id);if(compactViewport.matches)closeMobilePanel()};$('#rooms').append(b);});}
 function updateRoomUI(id){const room=interior?.design.rooms.find(r=>r.id===id),isExterior=id==='exterior'||id==='overview';document.querySelectorAll('[data-room]').forEach(b=>b.classList.toggle('selected',b.dataset.room===(isExterior?'exterior':id)));$('#view-kicker').textContent=isExterior?'01 / THE VILLA':id==='study'?'UPPER FLOOR / INDOOR STUDY':id==='balcony'?'UPPER FLOOR / OUTDOOR BALCONY':'VEIL OF LIGHT / THE INTERIORS';$('#view-title').textContent=isExterior?'Veil of Light':room?.name||'Veil of Light';$('#view-description').textContent=isExterior?'Curved roofs. Warm materials. A slower way to live.':id==='study'?'A quiet workspace inside the enclosed loft.':id==='balcony'?'Outdoor seating beyond the original loft glazing.':'Natural materials. Crafted furniture. Tropical light.';}
 function stopTour(){clearInterval(tourTimer);tourTimer=null;$('#tour').setAttribute('aria-pressed','false');$('#tour').innerHTML='▷ <span>Guided tour</span>';}
-function goRoom(id,fromTour=false){if(!ready)return;if(!fromTour)stopTour();if(id==='overview'){changeMode('orbit');updateRoomUI(id);return;}if(id==='exterior'){changeMode('orbit');camera.position.set(-26.5,5.8,13);controls.target.set(-41.5,2.7,-3.8);camera.lookAt(controls.target);controls.update();$('#cutaway').checked=false;applyCutaway();$('#room-view').value='exterior';updateRoomUI(id);return;}const room=interior.design.rooms.find(r=>r.id===id);if(!room)return;changeMode('orbit');activeCamera=camera;camera.fov=room.fov||48;camera.updateProjectionMatrix();camera.position.fromArray(room.eye);controls.target.fromArray(room.target);camera.lookAt(controls.target);controls.update();$('#cutaway').checked=false;applyCutaway();$('#room-view').value=id;updateRoomUI(id);dirty=true;}
+function goRoom(id,fromTour=false){if(!ready)return;if(!fromTour)stopTour();if(id==='overview'){changeMode('orbit');updateRoomUI(id);return;}if(id==='exterior'){changeMode('orbit');camera.position.set(-26.5,5.8,13);controls.target.set(-41.5,2.7,-3.8);framePortrait(controls.target);camera.lookAt(controls.target);controls.update();$('#cutaway').checked=false;applyCutaway();$('#room-view').value='exterior';updateRoomUI(id);return;}const room=interior.design.rooms.find(r=>r.id===id);if(!room)return;changeMode('orbit');activeCamera=camera;camera.fov=room.fov||48;camera.updateProjectionMatrix();camera.position.fromArray(room.eye);controls.target.fromArray(room.target);camera.lookAt(controls.target);controls.update();$('#cutaway').checked=false;applyCutaway();$('#room-view').value=id;updateRoomUI(id);dirty=true;}
 $('#tour').onclick=()=>{if(tourTimer){stopTour();return;}if(!ready)return;const route=['exterior','living','dining','guest','loft','study','balcony','terrace'];tourIndex=0;goRoom(route[tourIndex],true);$('#tour').setAttribute('aria-pressed','true');$('#tour').innerHTML='Ⅱ <span>Stop tour</span>';tourTimer=setInterval(()=>{tourIndex=(tourIndex+1)%route.length;goRoom(route[tourIndex],true);},6500);};
-$('#home').onclick=e=>{e.preventDefault();goRoom('exterior');};$('#panel-toggle').onclick=()=>{const hidden=document.body.classList.toggle('panel-hidden');$('#panel-toggle').setAttribute('aria-expanded',String(!hidden));};$('#board-open').onclick=()=>$('#moodboard').click();$('#garden').onchange=e=>{if(garden)garden.visible=e.target.checked;dirty=true;};document.querySelectorAll('[data-move]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();if(!walkActive)activateWalk();keys.add(b.dataset.move);};for(const event of ['pointerup','pointercancel','pointerleave'])b.addEventListener(event,()=>keys.delete(b.dataset.move));});
+const inspector=$('#inspector'), panelToggle=$('#panel-toggle'), roomToggle=$('#room-toggle'), tools=$('.tools'), footer=$('footer');
+let desktopPanelOpen=true, mobilePanel=null;
+function syncPanel(){
+ const compact=compactViewport.matches;
+ const open=compact?Boolean(mobilePanel):desktopPanelOpen;
+ document.body.classList.toggle('panel-hidden',!open);
+ document.body.dataset.mobilePanel=compact?(mobilePanel||''):'';
+ inspector.inert=!open;
+ panelToggle.setAttribute('aria-expanded',String(compact?mobilePanel==='design':open));
+ roomToggle.setAttribute('aria-expanded',String(compact&&mobilePanel==='rooms'));
+ $('#sheet-title').textContent=mobilePanel==='rooms'?'Choose a room':'Design';
+ syncWalkUI();
+}
+function closeMobilePanel(){
+ const trigger=mobilePanel==='rooms'?roomToggle:panelToggle;
+ mobilePanel=null;
+ syncPanel();
+ trigger.focus({preventScroll:true});
+}
+function toggleMobilePanel(panel){
+ if(mobilePanel===panel){closeMobilePanel();return;}
+ mobilePanel=panel;
+ resetWalkInput();
+ syncPanel();
+ inspector.scrollTop=0;
+ $('#close-panel').focus({preventScroll:true});
+}
+function syncLayout(){
+ (compactViewport.matches?$('#mobile-tools'):footer).append(tools);
+ mobilePanel=null;
+ resetWalkInput();
+ syncPanel();
+ resize();
+}
+$('#home').onclick=e=>{e.preventDefault();if(mobilePanel)closeMobilePanel();goRoom('exterior');};
+panelToggle.onclick=()=>{if(compactViewport.matches)toggleMobilePanel('design');else{desktopPanelOpen=!desktopPanelOpen;syncPanel();}};
+roomToggle.onclick=()=>toggleMobilePanel('rooms');
+$('#close-panel').onclick=closeMobilePanel;
+$('#board-open').onclick=()=>$('#moodboard').click();
+$('#garden').onchange=e=>{if(garden)garden.visible=e.target.checked;dirty=true;};
 $('#room-view').onchange=e=>goRoom(e.target.value);
-$('#moodboard').onclick=()=>{showBoard($('#exterior-theme').value);$('#design-dialog').showModal();};$('#close-design').onclick=()=>$('#design-dialog').close();
-document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>changeMode(b.dataset.mode));$('#reset').onclick=()=>{$('#room-view').value='overview';changeMode('orbit')};$('#cutaway').onchange=()=>ready&&applyCutaway();$('#height').oninput=()=>ready&&applyCutaway();$('#grid').onchange=e=>{if(grid)grid.visible=e.target.checked};$('#textures').onchange=e=>{for(const[m,state]of materials){for(const key of textureKeys)m[key]=e.target.checked?state[key]:null;m.color.copy(e.target.checked?state.color:new THREE.Color('#d9d8cd'));m.needsUpdate=true;}dirty=true;};
-$('#help').onclick=()=>$('#help-dialog').showModal();$('#close-help').onclick=()=>$('#help-dialog').close();$('#fullscreen').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}};
+$('#moodboard').onclick=()=>{resetWalkInput();showBoard($('#exterior-theme').value);$('#design-dialog').showModal();};$('#close-design').onclick=()=>$('#design-dialog').close();
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(mobilePanel)closeMobilePanel();stopTour();changeMode(b.dataset.mode)});$('#reset').onclick=()=>{$('#room-view').value='overview';changeMode('orbit')};$('#cutaway').onchange=()=>ready&&applyCutaway();$('#height').oninput=()=>ready&&applyCutaway();$('#grid').onchange=e=>{if(grid)grid.visible=e.target.checked};$('#textures').onchange=e=>{for(const[m,state]of materials){for(const key of textureKeys)m[key]=e.target.checked?state[key]:null;m.color.copy(e.target.checked?state.color:new THREE.Color('#d9d8cd'));m.needsUpdate=true;}dirty=true;};
+$('#help').onclick=()=>{resetWalkInput();$('#help-dialog').showModal()};$('#close-help').onclick=()=>$('#help-dialog').close();$('#fullscreen').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch{}};
 $('#capture').onclick=()=>{renderView();renderer.domElement.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.download=`veil-of-light-${currentScheme}-${$('#room-view').value}-${ambiance}.png`;a.href=url;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},'image/png')};
-function activateWalk(){walkActive=true;$('#walk-overlay').hidden=true;renderer.domElement.focus();$('#status').textContent='Walk mode · drag to look';try{const result=renderer.domElement.requestPointerLock?.();if(result?.catch)result.catch(()=>{});}catch{}}
-$('#resume').onclick=activateWalk;
-renderer.domElement.addEventListener('pointerdown',e=>{if(furnitureEditor?.enabled)return;if(mode==='walk'){if(!walkActive)activateWalk();dragging=true;lastX=e.clientX;lastY=e.clientY;try{renderer.domElement.setPointerCapture(e.pointerId)}catch{}}});
-renderer.domElement.addEventListener('pointerup',()=>dragging=false);
-renderer.domElement.addEventListener('pointermove',e=>{if(mode==='walk'&&dragging&&!locked){yaw-=(e.clientX-lastX)*.004;pitch=THREE.MathUtils.clamp(pitch-(e.clientY-lastY)*.004,-Math.PI*.47,Math.PI*.47);lastX=e.clientX;lastY=e.clientY;}});
-document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer.domElement;if(locked)walkActive=true;$('#walk-overlay').hidden=mode!=='walk'||walkActive;$('#crosshair').hidden=!locked;keys.clear()});
-document.addEventListener('mousemove',e=>{if(locked&&mode==='walk'){yaw-=e.movementX*.002;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.002,-Math.PI*.47,Math.PI*.47)}});
-window.addEventListener('keydown',e=>{if(e.code==='Escape')stopTour();if(e.code==='Escape'&&mode==='walk'){walkActive=false;$('#walk-overlay').hidden=false;keys.clear()}if(mode==='walk'&&!['INPUT','BUTTON','SELECT','TEXTAREA'].includes(document.activeElement.tagName)){if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','Space'].includes(e.code))e.preventDefault();keys.add(e.code)}});window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());
+function syncWalkUI(){
+ const touch=usesTouchControls();
+ const walking=mode==='walk';
+ document.body.classList.toggle('touch-navigation',touch);
+ document.body.classList.toggle('touch-walk',walking&&touch);
+ $('#touch-controls').hidden=!(walking&&touch)||Boolean(mobilePanel);
+ $('#walk-overlay').hidden=!walking||touch||walkActive;
+ $('#crosshair').hidden=!walking||(!locked&&!touch)||Boolean(mobilePanel);
+}
+function activateWalk(usePointerLock){
+ walkActive=true;
+ syncWalkUI();
+ renderer.domElement.focus({preventScroll:true});
+ $('#status').textContent='Walk mode · drag to look';
+ if(usePointerLock){try{renderer.domElement.requestPointerLock?.()?.catch?.(()=>{});}catch{}}
+}
+function lookBy(x,y,scale){
+ yaw-=x*scale;
+ pitch=THREE.MathUtils.clamp(pitch-y*scale,-Math.PI*.47,Math.PI*.47);
+ dirty=true;
+}
+const touchNavigation=createTouchNavigation({
+ joystick:$('#joystick'),
+ knob:$('#joystick-knob'),
+ liftButtons:document.querySelectorAll('[data-lift]'),
+ lookSurface:renderer.domElement,
+ canLook:()=>mode==='walk'&&!mobilePanel,
+ onLookStart:event=>{if(!walkActive)activateWalk(!usesTouchControls()&&event.pointerType!=='touch');},
+ onLook:(x,y)=>{if(!locked)lookBy(x,y,.004);},
+ onInput:()=>{if(!walkActive)activateWalk(false);}
+});
+function resetWalkInput(){keys.clear();touchNavigation.reset();}
+$('#resume').onclick=()=>activateWalk(true);
+document.addEventListener('pointerlockchange',()=>{
+ locked=document.pointerLockElement===renderer.domElement;
+ if(locked)walkActive=true;
+ syncWalkUI();
+ keys.clear();
+});
+document.addEventListener('mousemove',e=>{if(locked&&mode==='walk')lookBy(e.movementX,e.movementY,.002);});
+window.addEventListener('keydown',e=>{
+ if(e.code==='Escape'){
+  stopTour();
+  if(mobilePanel&&!document.querySelector('dialog[open]')){closeMobilePanel();return;}
+  if(mode==='walk'){walkActive=false;syncWalkUI();resetWalkInput();}
+ }
+ if(mode!=='walk'||mobilePanel||document.querySelector('dialog[open]'))return;
+ const focus=document.activeElement;
+ if(focus.id!=='joystick'&&['INPUT','BUTTON','SELECT','TEXTAREA'].includes(focus.tagName))return;
+ if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','Space','ShiftLeft','ShiftRight'].includes(e.code)){
+  e.preventDefault();
+  if(!walkActive&&usesTouchControls())activateWalk(false);
+  keys.add(e.code);
+ }
+});
+window.addEventListener('keyup',e=>keys.delete(e.code));
+window.addEventListener('blur',resetWalkInput);
+syncLayout();
+compactViewport.addEventListener('change',syncLayout);
+coarsePointer.addEventListener('change',syncWalkUI);
 function validHit(hit){return !$('#cutaway').checked||hit.point.y<=clip.constant+.02;}
 renderer.domElement.addEventListener('dblclick',e=>{if(!ready||mode==='walk'||furnitureEditor?.enabled)return;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,activeCamera);const hit=raycaster.intersectObjects(meshes,false).find(validHit);if(!hit)return;if(mode==='plan'){const p=hit.point.clone();changeMode('walk');camera.position.copy(p).add(new THREE.Vector3(0,1.65,0));walkY=camera.position.y;yaw=0;pitch=-.04;}else controls.target.copy(hit.point);});
 function canMove(from,delta){const distance=delta.length();if(distance<.00001)return true;raycaster.set(from,delta.clone().normalize());raycaster.far=distance+.22;const blocked=raycaster.intersectObjects(meshes,false).some(h=>validHit(h)&&(!h.object.material.transparent||h.object.userData.blocksMovement));raycaster.far=Infinity;return !blocked;}
-let previousFrame=0;function animate(){requestAnimationFrame(animate);if(document.hidden||contextLost)return;const stamp=performance.now();if(stamp-previousFrame<1000/30)return;previousFrame=stamp;const dt=Math.min(clock.getDelta(),.04);if(ready){bedside.update();doors.update(dt);if(mode==='walk'){camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0);if(walkActive){const x=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);const z=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);const step=new THREE.Vector3(x,0,z);if(step.lengthSq()){step.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(dt*(keys.has('ShiftLeft')||keys.has('ShiftRight')?4:1.8));const dx=new THREE.Vector3(step.x,0,0),dz=new THREE.Vector3(0,0,step.z);if(canMove(camera.position,dx))camera.position.add(dx);if(canMove(camera.position,dz))camera.position.add(dz);}camera.position.y+=((keys.has('KeyE')?1:0)-(keys.has('KeyQ')?1:0))*dt*1.5;camera.position.y=THREE.MathUtils.clamp(camera.position.y,box.min.y+.35,box.max.y+5);}}else if(controls.update())dirty=true;}if(dirty||(ready&&mode==='walk'&&walkActive))renderView();}
+const movement=new THREE.Vector3(), axisY=new THREE.Vector3(0,1,0), delta=new THREE.Vector3();
+function moveWalk(dt){
+ const x=touchNavigation.x+Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
+ const z=touchNavigation.z+Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
+ if(x||z){
+  const speed=keys.has('ShiftLeft')||keys.has('ShiftRight')?4:1.8;
+  movement.set(x,0,z).clampLength(0,1).applyAxisAngle(axisY,yaw).multiplyScalar(dt*speed);
+  delta.set(movement.x,0,0);
+  if(canMove(camera.position,delta))camera.position.add(delta);
+  delta.set(0,0,movement.z);
+  if(canMove(camera.position,delta))camera.position.add(delta);
+  dirty=true;
+ }
+ const lift=touchNavigation.lift+Number(keys.has('KeyE'))-Number(keys.has('KeyQ'));
+ if(lift){
+  camera.position.y=THREE.MathUtils.clamp(camera.position.y+Math.sign(lift)*dt*1.5,box.min.y+.35,box.max.y+5);
+  dirty=true;
+ }
+}
+let previousFrame=0;
+function animate(){
+ requestAnimationFrame(animate);
+ if(document.hidden||contextLost)return;
+ const stamp=performance.now();
+ if(stamp-previousFrame<1000/30)return;
+ previousFrame=stamp;
+ const dt=Math.min(clock.getDelta(),.04);
+ if(ready){
+  bedside.update();
+  if(mode==='walk'){
+   camera.rotation.order='YXZ';
+   camera.rotation.set(pitch,yaw,0);
+   if(walkActive)moveWalk(dt);
+  }else if(controls.update())dirty=true;
+  doors.update(dt);
+ }
+ if(dirty)renderView();
+}
 animate();window.addEventListener('resize',resize);
 
 async function applyExterior(id){if(!ready||schemeBusy||id===currentScheme)return;schemeBusy=true;const theme=exteriorPalettes.find(t=>t.id===id);$('#exterior-theme').disabled=true;$('#status').textContent='Opening '+theme.name+'…';try{const next=await loadNativeInterior(id,loadModel,materialKit);furnitureEditor?.dispose();bedside.unbind();const old=interior;model.remove(old.root);interior=next;model.add(next.root);styleShell(model,next.palette);exterior.apply(id);if(garden){scene.remove(garden);garden.traverse(o=>{if(o.isMesh&&o.geometry!==undefined)o.geometry.dispose();});}garden=addGarden(scene,next.palette);garden.visible=$('#garden').checked;doors.bindInterior(next);old.dispose();bedside.bind(next);currentScheme=id;updateSchemeUI(id);registerMaterials();makeEditor();$('#exterior-theme').value=id;$('#finish-caption').textContent=theme.subtitle+' · rebuilt furniture & decor';$('#exterior-name').textContent=theme.name;$('#model-detail').textContent=next.design.items.length+' rebuilt pieces · native SketchUp export';applyCutaway();updateLights();dirty=true;next.enhance().then(()=>{if(interior===next){styleShell(model,next.palette);exterior.enhance(next.palette);bedside.bind(next);registerMaterials();dirty=true;}}).catch(()=>{});}catch(error){console.warn('Scheme load failed',error);$('#exterior-theme').value=currentScheme;$('#status').textContent='Could not open that scheme. Please try again.';}finally{schemeBusy=false;$('#exterior-theme').disabled=false;if(currentScheme===id)$('#status').textContent='Veil of Light · ready';}}
@@ -114,4 +263,4 @@ document.querySelectorAll('[data-board]').forEach(b=>b.onclick=()=>showBoard(b.d
 for(const event of ['click','input','change'])document.addEventListener(event,()=>dirty=true);
 renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();contextLost=true;ready=false;window.villaBoot?.fail('The browser paused 3D to free graphics memory. Restart the lightweight view, or keep using the moodboards.');});
 renderer.domElement.addEventListener('webglcontextrestored',()=>{window.villaBoot?.fail('Graphics are available again. Restart the lightweight view to continue.');});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)dirty=true;});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)resetWalkInput();else dirty=true;});

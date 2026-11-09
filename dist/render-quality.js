@@ -1,9 +1,9 @@
-import * as T from 'three';
+import {compactViewport} from './touch-navigation.js?v=mobile-joystick-10';
 import {EffectComposer} from './vendor/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/postprocessing/RenderPass.js';
 import {SSAOPass} from './vendor/postprocessing/SSAOPass.js';
 import {OutputPass} from './vendor/postprocessing/OutputPass.js';
-export function defaultQuality(){return new URLSearchParams(location.search).get('quality')==='lite'||innerWidth<700||(navigator.deviceMemory&&navigator.deviceMemory<4)?'lite':'refined';}
+export function defaultQuality(){return new URLSearchParams(location.search).get('quality')==='lite'||compactViewport.matches||matchMedia('(pointer: coarse)').matches||(navigator.deviceMemory&&navigator.deviceMemory<4)?'lite':'refined';}
 export function createRenderSystem(renderer,scene,camera,onChange){
  let quality=defaultQuality(),composer,pass,ao;const select=document.querySelector('#render-quality');select.value=quality;
  function setup(){if(composer)return;composer=new EffectComposer(renderer);composer.renderTarget1.samples=composer.renderTarget2.samples=Math.min(4,renderer.capabilities.maxSamples);pass=new RenderPass(scene,camera);composer.addPass(pass);ao=new SSAOPass(scene,camera,innerWidth,innerHeight,12);ao.kernelRadius=.38;ao.minDistance=.001;ao.maxDistance=.12;
